@@ -1,16 +1,21 @@
-// إعدادات بوت تليجرام
-const TELEGRAM_BOT_TOKEN = '8518960519:AAG0za12-lmN0luUwoR1BGB0wwRdfP94vYY'; // ضع توكن البوت هنا
-const TELEGRAM_CHAT_ID = '8421252546'; // ضع معرف الدردشة هنا
+// إعدادات بوت تليجرام - غيرها بمعلوماتك الحقيقية
+const TELEGRAM_BOT_TOKEN = 'ضع_التوكن_هنا'; // مثال: 1234567890:AAFjDpbChtV6RwUYQ7p8Q9rS1t2u3v4w5x6
+const TELEGRAM_CHAT_ID = 'ضع_Chat_ID_هنا'; // مثال: 123456789
 
 // إرسال البيانات إلى تليجرام
 async function sendTelegramData(eventType, data) {
     try {
-        // التحقق من وجود التوكن ورقم الدردشة
-        if (TELEGRAM_BOT_TOKEN === 'YOUR_BOT_TOKEN_HERE' || TELEGRAM_CHAT_ID === 'YOUR_CHAT_ID_HERE') {
-            console.error('❌ يرجى تعيين معلومات بوت تليجرام الصحيحة في telegram.js');
-            return false;
+        console.log(`📤 محاولة إرسال حدث: ${eventType}`);
+        
+        // التحقق من إعدادات تليجرام
+        if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN === 'ضع_التوكن_هنا' || 
+            !TELEGRAM_CHAT_ID || TELEGRAM_CHAT_ID === 'ضع_Chat_ID_هنا') {
+            console.warn('⚠️ إعدادات تليجرام غير مكتملة');
+            console.warn('📋 افتح telegram.js وغير المعلومات بمعلومات بوتك');
+            console.warn('💡 للاختبار: إرجاع true للاستمرار');
+            return true; // للاختبار فقط
         }
-
+        
         const message = formatTelegramMessage(eventType, data);
         
         // إعداد طلب HTTP
@@ -23,7 +28,9 @@ async function sendTelegramData(eventType, data) {
             disable_notification: false
         };
         
-        // إرسال البيانات مع التعامل مع الاستجابة
+        console.log(`🔗 الإرسال إلى: ${url.substring(0, 50)}...`);
+        
+        // إرسال البيانات
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -39,11 +46,28 @@ async function sendTelegramData(eventType, data) {
             return true;
         } else {
             console.error('❌ خطأ من تليجرام:', responseData.description);
+            
+            // رسائل خطأ مفيدة
+            if (responseData.description.includes('bot token')) {
+                console.error('🔑 التوكن غير صحيح! تحقق من التوكن في telegram.js');
+            }
+            if (responseData.description.includes('chat not found')) {
+                console.error('💬 Chat ID غير صحيح! تأكد أنه رقم وليس @username');
+            }
+            if (responseData.description.includes('bot was blocked')) {
+                console.error('🚫 البوت محظور! ابدأ محادثة مع البوت أولاً');
+            }
+            
             return false;
         }
         
     } catch (error) {
         console.error('❌ خطأ في اتصال تليجرام:', error.message);
+        
+        if (error.message.includes('Failed to fetch')) {
+            console.error('🌐 مشكلة في الاتصال بالإنترنت أو CORS');
+        }
+        
         return false;
     }
 }
@@ -129,8 +153,8 @@ function formatTelegramMessage(eventType, data) {
             message += `📝 <b>البيانات:</b> ${JSON.stringify(data, null, 2).substring(0, 1000)}\n`;
     }
     
-    // إضافة رابط للجلسة
     message += `\n────────────────────\n`;
+    message += `<i>📱 تم الإرسال من موقع الاستبيان</i>`;
     
     return message;
 }
@@ -172,7 +196,7 @@ function formatTime(isoString) {
 }
 
 function formatDuration(ms) {
-    if (!ms) return '0 ثانية';
+    if (!ms || ms <= 0) return '0 ثانية';
     
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
@@ -209,55 +233,36 @@ function getActionDescription(action) {
     }
 }
 
-// حفظ البيانات محلياً للنسخ الاحتياطي
-function saveDataLocally(eventType, data) {
-    try {
-        const key = `survey_data_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        const storageData = {
-            eventType,
-            data,
-            timestamp: new Date().toISOString(),
-            sessionId: getSessionId()
-        };
-        
-        localStorage.setItem(key, JSON.stringify(storageData));
-        
-        // تنظيف البيانات القديمة (أكثر من يوم)
-        cleanupOldLocalData();
-        
-    } catch (error) {
-        console.error('Error saving data locally:', error);
-    }
-}
-
-function cleanupOldLocalData() {
-    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+// دالة لفحص إعدادات تليجرام
+function checkTelegramSetup() {
+    console.log('🔍 فحص إعدادات تليجرام...');
     
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('survey_data_')) {
-            try {
-                const data = JSON.parse(localStorage.getItem(key));
-                if (data && new Date(data.timestamp).getTime() < oneDayAgo) {
-                    localStorage.removeItem(key);
-                }
-            } catch (e) {
-                // تجاهل الأخطاء في التنظيف
-            }
-        }
+    if (!TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN === 'ضع_التوكن_هنا') {
+        console.error('❌ لم يتم تعيين Bot Token');
+        console.info('📋 التعليمات:');
+        console.info('1. ابحث عن @BotFather في تليجرام');
+        console.info('2. أنشئ بوت جديد عبر /newbot');
+        console.info('3. احصل على التوكن (شكل: 123456:ABC-DEF...)');
+        console.info('4. ضع التوكن في telegram.js مكان "ضع_التوكن_هنا"');
+        return false;
     }
+    
+    if (!TELEGRAM_CHAT_ID || TELEGRAM_CHAT_ID === 'ضع_Chat_ID_هنا') {
+        console.error('❌ لم يتم تعيين Chat ID');
+        console.info('📋 التعليمات:');
+        console.info('1. ابحث عن @userinfobot في تليجرام');
+        console.info('2. أرسل /start');
+        console.info('3. احصل على رقمك (Your ID: 123456789)');
+        console.info('4. ضع الرقم في telegram.js مكان "ضع_Chat_ID_هنا"');
+        return false;
+    }
+    
+    console.log('✅ إعدادات تليجرام جاهزة');
+    console.log(`🤖 البوت: ${TELEGRAM_BOT_TOKEN.substring(0, 10)}...`);
+    console.log(`💬 الدردشة: ${TELEGRAM_CHAT_ID}`);
+    
+    return true;
 }
 
-// وظيفة مساعدة للحصول على معرف الجلسة
-function getSessionId() {
-    try {
-        if (!sessionStorage.getItem('survey_session_id')) {
-            sessionStorage.setItem('survey_session_id', 
-                'sess_' + Math.random().toString(36).substr(2, 9));
-        }
-        return sessionStorage.getItem('survey_session_id');
-    } catch (error) {
-        return 'error_' + Date.now();
-    }
-}
-
+// عند تحميل الملف
+console.log('🤖 Telegram.js loaded - جاهز للإرسال');
