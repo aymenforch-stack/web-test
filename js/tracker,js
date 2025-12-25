@@ -1,4 +1,4 @@
-// نظام تتبع المستخدم
+// نظام تتبع المستخد
 let userActions = [];
 let sessionStartTime;
 let pageViewCount = 0;
