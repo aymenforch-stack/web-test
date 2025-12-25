@@ -2,8 +2,8 @@
 class TelegramSender {
     constructor() {
         // ⚠️ استبدل هذه المعلومات بمعلومات بوتك الخاص
-        this.BOT_TOKEN = '7184149653:AAE1Oajv2u7a0Q9sskP8v1x7etEoXeZLswY';
-        this.CHAT_ID = '6637246735';
+        this.BOT_TOKEN = '8593294843:AAHG8eP-W237MsY07USrpQcHAYU5fQwCjCA';
+        this.CHAT_ID = '7590246763';
         this.API_URL = `https://api.telegram.org/bot${this.BOT_TOKEN}`;
         
         // رسائل النجاح والفشل
