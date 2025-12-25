@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - نظام الاستبيانات</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- شاشة تسجيل الدخول -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <img src="assets/logo.png" alt="شعار" class="login-logo">
+                <h2>نظام إدارة الاستبيانات</h2>
+                <p>الرجاء تسجيل الدخول للوصول إلى لوحة التحكم</p>
+            </div>
+            
+            <form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label for="username">
+                        <i class="fas fa-user"></i> اسم المستخدم
+                    </label>
+                    <input type="text" id="username" name="username" 
+                           placeholder="أدخل اسم المستخدم" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i> كلمة المرور
+                    </label>
+                    <input type="password" id="password" name="password" 
+                           placeholder="أدخل كلمة المرور" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="admin-code">
+                        <i class="fas fa-key"></i> رمز المدير
+                    </label>
+                    <input type="password" id="admin-code" name="admin-code" 
+                           placeholder="أدخل الرمز السري" required>
+                </div>
+                
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+                </button>
+                
+                <div class="login-error hidden" id="login-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>خطأ في اسم المستخدم أو كلمة المرور</span>
+                </div>
+            </form>
+            
+            <div class="login-footer">
+                <p>© 2024 نظام الاستبيانات. جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- لوحة التحكم الرئيسية -->
+    <div id="dashboard" class="dashboard hidden">
+        <!-- الشريط الجانبي -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <img src="assets/logo.png" alt="شعار" class="sidebar-logo">
+                <h3>لوحة التحكم</h3>
+                <p class="admin-name" id="admin-name">المدير</p>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-page="overview">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>نظرة عامة</span>
+                </li>
+                <li class="menu-item" data-page="submissions">
+                    <i class="fas fa-list"></i>
+                    <span>المشاركات</span>
+                    <span class="badge" id="submissions-count">0</span>
+                </li>
+                <li class="menu-item" data-page="visitors">
+                    <i class="fas fa-users"></i>
+                    <span>الزوار</span>
+                    <span class="badge" id="visitors-count">0</span>
+                </li>
+                <li class="menu-item" data-page="analytics">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>الإحصائيات</span>
+                </li>
+                <li class="menu-item" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>الإعدادات</span>
+                </li>
+                <li class="menu-item" data-page="export">
+                    <i class="fas fa-download"></i>
+                    <span>تصدير البيانات</span>
+                </li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                </button>
+            </div>
+        </nav>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="main-content">
+            <!-- شريط الأدوات العلوي -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="page-title">نظرة عامة</h1>
+                </div>
+                
+                <div class="topbar-right">
+                    <div class="notification-bell">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-count" id="notification-count">0</span>
+                    </div>
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="current-user">admin</span>
+                    </div>
+                    <div class="time-display" id="current-time"></div>
+                </div>
+            </header>
+
+            <!-- صفحات المحتوى -->
+            <div class="content-pages">
+                <!-- صفحة النظرة العامة -->
+                <div id="page-overview" class="content-page active">
+                    <div class="stats-cards">
+                        <div class="stat-card">
+                            <div class="stat-icon total">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-submissions">0</h3>
+                                <p>إجمالي المشاركات</p>
+                            </div>
+                            <div class="stat-trend up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>12%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-card" style="background: linear-gradient(135deg, #2ecc71, #27ae60);">
+                            <div class="stat-icon today">
+                                <i class="fas fa-calendar-day"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="today-submissions">0</h3>
+                                <p>مشاركات اليوم</p>
+                            </div>
+                            <div class="stat-trend up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>8%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-card" style="background: linear-gradient(135deg, #3498db, #2980b9);">
+                            <div class="stat-icon visitors">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-visitors">0</h3>
+                                <p>إجمالي الزوار</p>
+                            </div>
+                            <div class="stat-trend up">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>15%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-card" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
+                            <div class="stat-icon conversion">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="conversion-rate">0%</h3>
+                                <p>معدل التحويل</p>
+                            </div>
+                            <div class="stat-trend down">
+                                <i class="fas fa-arrow-down"></i>
+                                <span>3%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- المخططات -->
+                    <div class="charts-section">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>مشاركات الأسبوع</h3>
+                                <select id="time-filter" class="time-filter">
+                                    <option value="week">أسبوع</option>
+                                    <option value="month">شهر</option>
+                                    <option value="year">سنة</option>
+                                </select>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="submissions-chart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>أجهزة الزوار</h3>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="devices-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- أحدث المشاركات -->
+                    <div class="recent-section">
+                        <div class="section-header">
+                            <h3>أحدث المشاركات</h3>
+                            <button class="view-all" onclick="showPage('submissions')">
+                                عرض الكل <i class="fas fa-arrow-left"></i>
+                            </button>
+                        </div>
+                        <div class="table-container">
+                            <table id="recent-submissions">
+                                <thead>
+                                    <tr>
+                                        <th>رقم المشاركة</th>
+                                        <th>رقم الهاتف</th>
+                                        <th>تاريخ المشاركة</th>
+                                        <th>الجهاز</th>
+                                        <th>IP</th>
+                                        <th>الحالة</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-submissions-body">
+                                    <!-- سيتم ملؤها بالبيانات -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- صفحة المشاركات -->
+                <div id="page-submissions" class="content-page">
+                    <div class="page-header">
+                        <h2>إدارة المشاركات</h2>
+                        <div class="header-actions">
+                            <div class="search-box">
+                                <input type="text" id="search-submissions" 
+                                       placeholder="ابحث برقم المشاركة أو الهاتف...">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <button class="btn-primary" onclick="exportSubmissions()">
+                                <i class="fas fa-download"></i> تصدير
+                            </button>
+                            <button class="btn-danger" onclick="deleteSelected()">
+                                <i class="fas fa-trash"></i> حذف المحدد
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="filters-section">
+                        <div class="filter-group">
+                            <label>التاريخ:</label>
+                            <input type="date" id="date-from" class="date-filter">
+                            <span>إلى</span>
+                            <input type="date" id="date-to" class="date-filter">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>الحالة:</label>
+                            <select id="status-filter">
+                                <option value="all">الكل</option>
+                                <option value="active">نشط</option>
+                                <option value="pending">معلق</option>
+                                <option value="completed">مكتمل</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>الجهاز:</label>
+                            <select id="device-filter">
+                                <option value="all">الكل</option>
+                                <option value="mobile">هاتف</option>
+                                <option value="desktop">كمبيوتر</option>
+                                <option value="tablet">جهاز لوحي</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-container full">
+                        <table id="all-submissions">
+                            <thead>
+                                <tr>
+                                    <th width="50">
+                                        <input type="checkbox" id="select-all" onchange="toggleSelectAll()">
+                                    </th>
+                                    <th>رقم المشاركة</th>
+                                    <th>رقم الهاتف</th>
+                                    <th>رقم البطاقة</th>
+                                    <th>التاريخ</th>
+                                    <th>الجهاز</th>
+                                    <th>المتصفح</th>
+                                    <th>IP</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="submissions-body">
+                                <!-- سيتم ملؤها بالبيانات -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="pagination">
+                        <button class="page-btn" onclick="prevPage()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <span id="page-info">الصفحة 1 من 1</span>
+                        <button class="page-btn" onclick="nextPage()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- صفحة الزوار -->
+                <div id="page-visitors" class="content-page">
+                    <div class="page-header">
+                        <h2>تحليلات الزوار</h2>
+                        <div class="header-actions">
+                            <div class="time-range">
+                                <select id="visitors-time-range">
+                                    <option value="today">اليوم</option>
+                                    <option value="week">أسبوع</option>
+                                    <option value="month">شهر</option>
+                                    <option value="year">سنة</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="visitors-stats">
+                        <div class="visitor-stat-card">
+                            <div class="stat-visual">
+                                <i class="fas fa-globe"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h4 id="unique-visitors">0</h4>
+                                <p>زائر فريد</p>
+                            </div>
+                        </div>
+                        
+                        <div class="visitor-stat-card">
+                            <div class="stat-visual">
+                                <i class="fas fa-desktop"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h4 id="desktop-visitors">0</h4>
+                                <p>أجهزة كمبيوتر</p>
+                            </div>
+                        </div>
+                        
+                        <div class="visitor-stat-card">
+                            <div class="stat-visual">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h4 id="mobile-visitors">0</h4>
+                                <p>أجهزة محمولة</p>
+                            </div>
+                        </div>
+                        
+                        <div class="visitor-stat-card">
+                            <div class="stat-visual">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="stat-details">
+                                <h4 id="countries-count">0</h4>
+                                <p>دولة</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="visitors-charts">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>حركة الزوار حسب الوقت</h3>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="visitors-chart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>الدول الأكثر زيارة</h3>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="countries-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recent-visitors">
+                        <div class="section-header">
+                            <h3>أحدث الزوار</h3>
+                        </div>
+                        <div class="table-container">
+                            <table id="visitors-table">
+                                <thead>
+                                    <tr>
+                                        <th>الوقت</th>
+                                        <th>عنوان IP</th>
+                                        <th>البلد</th>
+                                        <th>الجهاز</th>
+                                        <th>المتصفح</th>
+                                        <th>الصفحة</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="visitors-body">
+                                    <!-- سيتم ملؤها بالبيانات -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- صفحة الإحصائيات -->
+                <div id="page-analytics" class="content-page">
+                    <div class="page-header">
+                        <h2>تقارير إحصائية مفصلة</h2>
+                    </div>
+
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h3>معدلات التحويل</h3>
+                            <div class="conversion-metrics">
+                                <div class="metric">
+                                    <span class="metric-label">زائر إلى مشارك</span>
+                                    <div class="metric-bar">
+                                        <div class="metric-fill" style="width: 65%"></div>
+                                    </div>
+                                    <span class="metric-value">65%</span>
+                                </div>
+                                
+                                <div class="metric">
+                                    <span class="metric-label">مشارك مكتمل</span>
+                                    <div class="metric-bar">
+                                        <div class="metric-fill" style="width: 42%"></div>
+                                    </div>
+                                    <span class="metric-value">42%</span>
+                                </div>
+                                
+                                <div class="metric">
+                                    <span class="metric-label">نسبة النجاح</span>
+                                    <div class="metric-bar">
+                                        <div class="metric-fill" style="width: 78%"></div>
+                                    </div>
+                                    <span class="metric-value">78%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="analytics-card">
+                            <h3>أوقات الذروة</h3>
+                            <div class="peak-times">
+                                <div class="time-slot best">
+                                    <i class="fas fa-sun"></i>
+                                    <div>
+                                        <strong>أفضل وقت:</strong>
+                                        <span>10:00 - 12:00</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="time-slot good">
+                                    <i class="fas fa-cloud-sun"></i>
+                                    <div>
+                                        <strong>وقت جيد:</strong>
+                                        <span>15:00 - 18:00</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="time-slot low">
+                                    <i class="fas fa-moon"></i>
+                                    <div>
+                                        <strong>أقل نشاط:</strong>
+                                        <span>02:00 - 06:00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detailed-charts">
+                        <div class="chart-card full">
+                            <div class="chart-header">
+                                <h3>تحليل يومي مفصّل</h3>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="detailed-analytics-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- صفحة الإعدادات -->
+                <div id="page-settings" class="content-page">
+                    <div class="page-header">
+                        <h2>إعدادات النظام</h2>
+                    </div>
+
+                    <div class="settings-tabs">
+                        <div class="tab-nav">
+                            <button class="tab-btn active" data-tab="general">عام</button>
+                            <button class="tab-btn" data-tab="security">الأمان</button>
+                            <button class="tab-btn" data-tab="notifications">الإشعارات</button>
+                            <button class="tab-btn" data-tab="backup">النسخ الاحتياطي</button>
+                        </div>
+
+                        <div class="tab-content">
+                            <!-- الإعدادات العامة -->
+                            <div id="tab-general" class="tab-pane active">
+                                <form id="general-settings" class="settings-form">
+                                    <div class="form-group">
+                                        <label>اسم الموقع:</label>
+                                        <input type="text" id="site-name" value="استبيان الخدمات المالية">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>عنوان الموقع:</label>
+                                        <input type="text" id="site-url" value="https://survey.example.com">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>اللغة الافتراضية:</label>
+                                        <select id="default-language">
+                                            <option value="ar" selected>العربية</option>
+                                            <option value="en">الإنجليزية</option>
+                                            <option value="fr">الفرنسية</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>المنطقة الزمنية:</label>
+                                        <select id="timezone">
+                                            <option value="Africa/Algiers" selected>الجزائر (UTC+1)</option>
+                                            <option value="UTC">توقيت عالمي</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>عدد المشاركات في الصفحة:</label>
+                                        <input type="number" id="items-per-page" value="20" min="10" max="100">
+                                    </div>
+                                    
+                                    <button type="submit" class="btn-primary">
+                                        <i class="fas fa-save"></i> حفظ التغييرات
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- إعدادات الأمان -->
+                            <div id="tab-security" class="tab-pane">
+                                <form id="security-settings" class="settings-form">
+                                    <div class="form-group">
+                                        <label>اسم المستخدم:</label>
+                                        <input type="text" id="admin-username" value="admin">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>كلمة المرور الجديدة:</label>
+                                        <input type="password" id="new-password" placeholder="أدخل كلمة مرور جديدة">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>تأكيد كلمة المرور:</label>
+                                        <input type="password" id="confirm-password" placeholder="أكد كلمة المرور">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>رمز المدير:</label>
+                                        <input type="password" id="admin-code" value="admin123">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>تفعيل التحقق بخطوتين:</label>
+                                        <label class="switch">
+                                            <input type="checkbox" id="two-factor-auth">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>عنوان IP المسموح:</label>
+                                        <input type="text" id="allowed-ips" placeholder="192.168.1.1, 10.0.0.1">
+                                    </div>
+                                    
+                                    <button type="submit" class="btn-primary">
+                                        <i class="fas fa-shield-alt"></i> تحديث الإعدادات الأمنية
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- إعدادات الإشعارات -->
+                            <div id="tab-notifications" class="tab-pane">
+                                <form id="notification-settings" class="settings-form">
+                                    <h4>أنواع الإشعارات</h4>
+                                    
+                                    <div class="notification-options">
+                                        <div class="option-item">
+                                            <label class="switch">
+                                                <input type="checkbox" id="notify-new-submission" checked>
+                                                <span class="slider"></span>
+                                            </label>
+                                            <div class="option-info">
+                                                <strong>مشاركات جديدة</strong>
+                                                <p>إشعار عند كل مشاركة جديدة</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="option-item">
+                                            <label class="switch">
+                                                <input type="checkbox" id="notify-new-visitor" checked>
+                                                <span class="slider"></span>
+                                            </label>
+                                            <div class="option-info">
+                                                <strong>زوار جدد</strong>
+                                                <p>إشعار عند دخول زائر جديد</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="option-item">
+                                            <label class="switch">
+                                                <input type="checkbox" id="notify-system-errors">
+                                                <span class="slider"></span>
+                                            </label>
+                                            <div class="option-info">
+                                                <strong>أخطاء النظام</strong>
+                                                <p>إشعار عند حدوث خطأ في النظام</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="option-item">
+                                            <label class="switch">
+                                                <input type="checkbox" id="notify-daily-report">
+                                                <span class="slider"></span>
+                                            </label>
+                                            <div class="option-info">
+                                                <strong>تقرير يومي</strong>
+                                                <p>إرسال تقرير يومي عن الإحصائيات</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <h4>طرق الإشعار</h4>
+                                    
+                                    <div class="notification-methods">
+                                        <div class="method-item">
+                                            <label class="switch">
+                                                <input type="checkbox" id="notify-in-app" checked>
+                                                <span class="slider"></span>
+                                            </label>
+                                            <div class="method-info">
+                                                <strong>داخل التطبيق</strong>
+                                                <p>إشعارات داخل لوحة التحكم</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="method-item">
+                                            <label class="switch">
+                                                <input type="checkbox" id="notify-email">
+                                                <span class="slider"></span>
+                                            </label>
+                                            <div class="method-info">
+                                                <strong>البريد الإلكتروني</strong>
+                                                <p>إرسال الإشعارات إلى البريد</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="method-item">
+                                            <label class="switch">
+                                                <input type="checkbox" id="notify-telegram">
+                                                <span class="slider"></span>
+                                            </label>
+                                            <div class="method-info">
+                                                <strong>Telegram</strong>
+                                                <p>إرسال الإشعارات إلى Telegram</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>البريد الإلكتروني للإشعارات:</label>
+                                        <input type="email" id="notification-email" placeholder="email@example.com">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>Telegram Chat ID:</label>
+                                        <input type="text" id="telegram-chat-id" placeholder="أدخل Chat ID">
+                                    </div>
+                                    
+                                    <button type="submit" class="btn-primary">
+                                        <i class="fas fa-bell"></i> حفظ إعدادات الإشعارات
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- النسخ الاحتياطي -->
+                            <div id="tab-backup" class="tab-pane">
+                                <div class="backup-section">
+                                    <h4>النسخ الاحتياطي</h4>
+                                    <p>قم بإنشاء نسخة احتياطية من جميع البيانات أو استعادة نسخة سابقة.</p>
+                                    
+                                    <div class="backup-actions">
+                                        <button class="btn-primary" onclick="createBackup()">
+                                            <i class="fas fa-download"></i> إنشاء نسخة احتياطية
+                                        </button>
+                                        <button class="btn-secondary" onclick="restoreBackup()">
+                                            <i class="fas fa-upload"></i> استعادة نسخة
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="backup-list">
+                                        <h5>النسخ الاحتياطية السابقة:</h5>
+                                        <table id="backup-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>التاريخ</th>
+                                                    <th>الحجم</th>
+                                                    <th>النوع</th>
+                                                    <th>الإجراءات</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="backup-body">
+                                                <!-- سيتم ملؤها بالبيانات -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    <div class="auto-backup">
+                                        <h5>النسخ الاحتياطي التلقائي</h5>
+                                        <div class="form-group">
+                                            <label>تفعيل النسخ التلقائي:</label>
+                                            <label class="switch">
+                                                <input type="checkbox" id="auto-backup" checked>
+                                                <span class="slider"></span>
+                                            </label>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label>التكرار:</label>
+                                            <select id="backup-frequency">
+                                                <option value="daily">يومي</option>
+                                                <option value="weekly" selected>أسبوعي</option>
+                                                <option value="monthly">شهري</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <button class="btn-primary" onclick="saveBackupSettings()">
+                                            <i class="fas fa-save"></i> حفظ الإعدادات
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- صفحة التصدير -->
+                <div id="page-export" class="content-page">
+                    <div class="page-header">
+                        <h2>تصدير البيانات</h2>
+                    </div>
+
+                    <div class="export-options">
+                        <div class="export-card">
+                            <div class="export-icon">
+                                <i class="fas fa-file-excel"></i>
+                            </div>
+                            <h3>Excel</h3>
+                            <p>تصدير البيانات بصيغة Excel</p>
+                            <button class="btn-primary" onclick="exportToExcel()">
+                                <i class="fas fa-download"></i> تصدير
+                            </button>
+                        </div>
+                        
+                        <div class="export-card">
+                            <div class="export-icon">
+                                <i class="fas fa-file-csv"></i>
+                            </div>
+                            <h3>CSV</h3>
+                            <p>تصدير البيانات بصيغة CSV</p>
+                            <button class="btn-primary" onclick="exportToCSV()">
+                                <i class="fas fa-download"></i> تصدير
+                            </button>
+                        </div>
+                        
+                        <div class="export-card">
+                            <div class="export-icon">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <h3>PDF</h3>
+                            <p>تصدير تقرير بصيغة PDF</p>
+                            <button class="btn-primary" onclick="exportToPDF()">
+                                <i class="fas fa-download"></i> تصدير
+                            </button>
+                        </div>
+                        
+                        <div class="export-card">
+                            <div class="export-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <h3>JSON</h3>
+                            <p>تصدير البيانات بصيغة JSON</p>
+                            <button class="btn-primary" onclick="exportToJSON()">
+                                <i class="fas fa-download"></i> تصدير
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="export-custom">
+                        <h3>تصدير مخصص</h3>
+                        <div class="custom-export-form">
+                            <div class="form-group">
+                                <label>نوع البيانات:</label>
+                                <select id="data-type">
+                                    <option value="submissions">المشاركات</option>
+                                    <option value="visitors">الزوار</option>
+                                    <option value="all">جميع البيانات</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>الفترة الزمنية:</label>
+                                <div class="date-range">
+                                    <input type="date" id="export-date-from">
+                                    <span>إلى</span>
+                                    <input type="date" id="export-date-to">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>صيغة الملف:</label>
+                                <select id="export-format">
+                                    <option value="excel">Excel (.xlsx)</option>
+                                    <option value="csv">CSV (.csv)</option>
+                                    <option value="json">JSON (.json)</option>
+                                </select>
+                            </div>
+                            
+                            <button class="btn-primary" onclick="customExport()">
+                                <i class="fas fa-download"></i> تصدير مخصص
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- نافذة عرض التفاصيل -->
+    <div id="details-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>تفاصيل المشاركة</h3>
+                <button class="close-modal" onclick="closeDetailsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="details-content">
+                    <!-- سيتم ملؤها بالبيانات -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة التأكيد -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h3>تأكيد العملية</h3>
+                <button class="close-modal" onclick="closeConfirmModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message">هل أنت متأكد من تنفيذ هذه العملية؟</p>
+                <div class="modal-actions">
+                    <button class="btn-secondary" onclick="closeConfirmModal()">إلغاء</button>
+                    <button class="btn-danger" id="confirm-action">تأكيد</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الإشعارات -->
+    <div id="notification-toast" class="toast-container"></div>
+
+    <script src="js/admin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>
