@@ -696,3 +696,316 @@ body {
         justify-content: center;
     }
 }
+
+/* إضافة هذه التحديثات في نهاية الملف */
+
+/* إصلاح مشكلة رقم البطاقة */
+#card-number {
+    font-family: monospace;
+    letter-spacing: 1px;
+}
+
+/* إصلاح التحقق من الصحة */
+.input-with-icon {
+    position: relative;
+}
+
+.validation-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;
+}
+
+.validation-icon.valid {
+    color: var(--success-color);
+}
+
+.validation-icon.invalid {
+    color: var(--danger-color);
+}
+
+input:valid ~ .validation-icon.valid {
+    display: block;
+}
+
+input:invalid:not(:placeholder-shown) ~ .validation-icon.invalid {
+    display: block;
+}
+
+/* تحسين تنسيق رقم البطاقة */
+#card-number::placeholder {
+    letter-spacing: normal;
+    font-family: 'Cairo', sans-serif;
+}
+
+#card-number:focus::placeholder {
+    opacity: 0.5;
+}
+
+/* إضافة تحسينات للشاشات الصغيرة */
+@media (max-width: 480px) {
+    #card-number {
+        font-size: 16px; /* منع التكبير في iOS */
+    }
+    
+    .input-group input {
+        font-size: 16px; /* منع التكبير في iOS */
+    }
+}
+
+/* تحسين مظهر رمز التحقق */
+.code-input-container {
+    position: relative;
+}
+
+.code-input-container input {
+    padding-left: 50px;
+    letter-spacing: 10px;
+    font-size: 1.5rem;
+    text-align: center;
+    font-family: monospace;
+}
+
+.code-input-container .refresh-code {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 5px;
+    border-radius: 5px;
+    transition: var(--transition);
+}
+
+.code-input-container .refresh-code:hover {
+    background: rgba(44, 90, 160, 0.1);
+}
+
+/* تحسين مظهر معلومات الجهاز */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.info-item {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border-color);
+}
+
+.info-label {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.info-value {
+    color: var(--dark-color);
+    font-weight: 500;
+    direction: ltr;
+    text-align: left;
+}
+
+/* إضافة أنيميشن للنجاح */
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(-100px) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(500px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.confetti-piece {
+    position: absolute;
+    width: 10px;
+    height: 20px;
+    background: var(--accent-gold);
+    opacity: 0;
+    animation: confetti-fall 3s ease-in-out infinite;
+}
+
+.confetti-piece:nth-child(1) {
+    left: 10%;
+    animation-delay: 0s;
+    background: #2c5aa0;
+}
+
+.confetti-piece:nth-child(2) {
+    left: 30%;
+    animation-delay: 0.5s;
+    background: #27ae60;
+}
+
+.confetti-piece:nth-child(3) {
+    left: 50%;
+    animation-delay: 1s;
+    background: #d4af37;
+}
+
+.confetti-piece:nth-child(4) {
+    left: 70%;
+    animation-delay: 1.5s;
+    background: #e74c3c;
+}
+
+.confetti-piece:nth-child(5) {
+    left: 90%;
+    animation-delay: 2s;
+    background: #9b59b6;
+}
+
+/* تحسين مظهر زر المشاركة */
+.share-code {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.share-code input {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    text-align: center;
+    font-family: monospace;
+    font-size: 1.1rem;
+}
+
+.copy-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Cairo', sans-serif;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.copy-btn:hover {
+    background: var(--secondary-color);
+    transform: translateY(-2px);
+}
+
+.share-success {
+    background: #d4edda;
+    color: #155724;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    animation: fadeIn 0.5s ease;
+}
+
+/* إضافة تأثيرات للتحميل */
+.ip-loading {
+    position: relative;
+}
+
+.loader {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* تحسين مظهر أزرار الإجراءات */
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.btn-view, .btn-edit, .btn-delete {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-view {
+    background: var(--info-color);
+    color: white;
+}
+
+.btn-edit {
+    background: var(--warning-color);
+    color: white;
+}
+
+.btn-delete {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-view:hover, .btn-edit:hover, .btn-delete:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* إضافة تلميحات للأزرار */
+[title] {
+    position: relative;
+}
+
+[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--dark-color);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1000;
+}
+
+[title]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% - 5px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--dark-color);
+    z-index: 1000;
+}
