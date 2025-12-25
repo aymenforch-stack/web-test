@@ -1,6 +1,6 @@
 // إعدادات بوت تليجرام - غيرها بمعلوماتك الحقيقية
-const TELEGRAM_BOT_TOKEN = 'ضع_التوكن_هنا'; // مثال: 1234567890:AAFjDpbChtV6RwUYQ7p8Q9rS1t2u3v4w5x6
-const TELEGRAM_CHAT_ID = 'ضع_Chat_ID_هنا'; // مثال: 123456789
+const TELEGRAM_BOT_TOKEN = '8518960519:AAG0za12-lmN0luUwoR1BGB0wwRdfP94vYY'; // مثال: 1234567890:V6RwUYQ7p8Q9rS1t2u3v4w5x6
+const TELEGRAM_CHAT_ID = '8421252546'; // مثال: 123456789
 
 // إرسال البيانات إلى تليجرام
 async function sendTelegramData(eventType, data) {
