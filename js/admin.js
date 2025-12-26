@@ -1,31 +1,46 @@
-// تطبيق لوحة تحكم المدير
+// لوحة تحكم المدير المعدلة
 class AdminApp {
     constructor() {
         this.participants = [];
+        this.notifications = [];
         this.init();
     }
     
     init() {
+        this.checkLogin();
         this.setupEventListeners();
-        
-        // التحقق من تحديثات البيانات
         this.startAutoRefresh();
+    }
+    
+    // التحقق من تسجيل الدخول
+    checkLogin() {
+        const loggedIn = localStorage.getItem('admin_logged_in') === 'true';
+        const loginTime = localStorage.getItem('admin_login_time');
+        
+        if (loggedIn && loginTime) {
+            // التحقق من انتهاء الجلسة (30 دقيقة)
+            const sessionTimeout = 30 * 60 * 1000;
+            const currentTime = Date.now();
+            const loginTimestamp = parseInt(loginTime);
+            
+            if (currentTime - loginTimestamp < sessionTimeout) {
+                // تمديد الجلسة
+                localStorage.setItem('admin_login_time', currentTime.toString());
+                this.showDashboard();
+                return;
+            }
+        }
+        
+        this.showLogin();
     }
     
     // تسجيل الدخول
     login(username, password) {
         if (username === CONFIG.ADMIN.USERNAME && password === CONFIG.ADMIN.PASSWORD) {
-            // حفظ حالة تسجيل الدخول
             localStorage.setItem('admin_logged_in', 'true');
             localStorage.setItem('admin_login_time', Date.now().toString());
             
-            // الانتقال للوحة التحكم
-            document.getElementById('login-page').classList.remove('active');
-            document.getElementById('dashboard-page').classList.add('active');
-            
-            // تحميل البيانات
-            this.loadData();
-            
+            this.showDashboard();
             this.showNotification('تم تسجيل الدخول بنجاح', 'success');
             return true;
         } else {
@@ -38,53 +53,87 @@ class AdminApp {
     logout() {
         localStorage.removeItem('admin_logged_in');
         localStorage.removeItem('admin_login_time');
-        
-        document.getElementById('dashboard-page').classList.remove('active');
-        document.getElementById('login-page').classList.add('active');
-        
+        this.showLogin();
         this.showNotification('تم تسجيل الخروج', 'info');
+    }
+    
+    // عرض صفحة تسجيل الدخول
+    showLogin() {
+        document.getElementById('login-page').classList.add('active');
+        document.getElementById('dashboard-page').classList.remove('active');
+    }
+    
+    // عرض لوحة التحكم
+    showDashboard() {
+        document.getElementById('login-page').classList.remove('active');
+        document.getElementById('dashboard-page').classList.add('active');
+        this.loadData();
     }
     
     // تحميل البيانات
     loadData() {
-        // جلب المشاركين من قاعدة البيانات
-        this.participants = DB.getParticipants();
-        
-        // تحديث الإحصائيات
+        this.loadParticipants();
+        this.loadNotifications();
         this.updateStats();
-        
-        // تحديث الجدول
-        this.updateTable();
+    }
+    
+    // تحميل المشاركين
+    loadParticipants() {
+        const data = localStorage.getItem('survey_participants');
+        this.participants = data ? JSON.parse(data) : [];
+        this.updateParticipantsTable();
+    }
+    
+    // تحميل الإشعارات
+    loadNotifications() {
+        const data = localStorage.getItem('manager_notifications');
+        this.notifications = data ? JSON.parse(data) : [];
+        this.updateNotificationsBadge();
     }
     
     // تحديث الإحصائيات
     updateStats() {
-        const totalParticipants = this.participants.length;
+        // إجمالي المشاركين
+        const totalElement = document.getElementById('admin-total-participants');
+        if (totalElement) {
+            totalElement.textContent = this.participants.length;
+        }
         
         // مشاركات اليوم
         const today = new Date().toDateString();
-        const todayParticipants = this.participants.filter(p => {
-            const participantDate = new Date(p.createdAt).toDateString();
-            return participantDate === today;
+        const todayCount = this.participants.filter(p => {
+            const date = new Date(p.completedAt).toDateString();
+            return date === today;
         }).length;
         
-        // تحديث العناصر
-        document.getElementById('admin-total-participants').textContent = totalParticipants;
-        document.getElementById('today-participants').textContent = todayParticipants;
+        const todayElement = document.getElementById('today-participants');
+        if (todayElement) {
+            todayElement.textContent = todayCount;
+        }
+        
+        // إشعارات غير مقروءة
+        const unreadCount = this.notifications.filter(n => !n.read).length;
+        this.updateNotificationsBadge(unreadCount);
     }
     
     // تحديث جدول المشاركين
-    updateTable() {
+    updateParticipantsTable() {
         const tableBody = document.getElementById('participants-table');
-        const recentParticipants = this.participants.slice(-10).reverse(); // آخر 10 مشاركات
+        if (!tableBody) return;
+        
+        // عرض آخر 10 مشاركات
+        const recentParticipants = [...this.participants]
+            .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt))
+            .slice(0, 10);
         
         tableBody.innerHTML = '';
         
         if (recentParticipants.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="4" style="text-align: center; padding: 2rem; color: #64748b;">
-                        لا توجد مشاركات بعد
+                    <td colspan="4" class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>لا توجد مشاركات بعد</p>
                     </td>
                 </tr>
             `;
@@ -95,7 +144,7 @@ class AdminApp {
             const row = document.createElement('tr');
             
             // تنسيق التاريخ
-            const date = new Date(participant.createdAt);
+            const date = new Date(participant.completedAt);
             const formattedDate = date.toLocaleDateString('ar-SA', {
                 year: 'numeric',
                 month: 'short',
@@ -104,17 +153,40 @@ class AdminApp {
                 minute: '2-digit'
             });
             
+            // عرض الاسم من الخطوة 1
+            const name = participant.step1?.fullName || 'غير معروف';
+            const phone = participant.step1?.phone || 'غير معروف';
+            
             row.innerHTML = `
-                <td>${participant.id}</td>
-                <td>${participant.phone}</td>
+                <td>
+                    <div class="participant-id">${participant.id}</div>
+                    <small>${formattedDate}</small>
+                </td>
+                <td>
+                    <div class="participant-name">${name}</div>
+                    <small>${phone}</small>
+                </td>
                 <td>${formattedDate}</td>
                 <td>
-                    <span class="status-badge status-new">جديد</span>
+                    <span class="status-badge completed">مكتمل</span>
                 </td>
             `;
             
             tableBody.appendChild(row);
         });
+    }
+    
+    // تحديث عداد الإشعارات
+    updateNotificationsBadge(count = null) {
+        if (count === null) {
+            count = this.notifications.filter(n => !n.read).length;
+        }
+        
+        const badge = document.getElementById('notifications-badge');
+        if (badge) {
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'flex' : 'none';
+        }
     }
     
     // تحديث تلقائي
@@ -126,17 +198,22 @@ class AdminApp {
             }
         }, 3000);
         
-        // الاستماع لتحديثات قاعدة البيانات
+        // الاستماع لتحديثات الاستبيانات
         window.addEventListener('storage', (event) => {
-            if (event.key === 'fs_last_update' || event.key === 'fs_broadcast') {
-                if (localStorage.getItem('admin_logged_in') === 'true') {
-                    this.loadData();
-                    
-                    // عرض إشعار عند مشاركة جديدة
-                    if (event.key === 'fs_broadcast') {
-                        this.showNotification('تمت إضافة مشاركة جديدة', 'info');
-                    }
+            if (localStorage.getItem('admin_logged_in') !== 'true') return;
+            
+            if (event.key === 'last_survey_update' || event.key === 'survey_broadcast') {
+                this.loadData();
+                
+                // عرض إشعار عند مشاركة جديدة
+                if (event.key === 'survey_broadcast') {
+                    this.showNotification('🔔 هناك مشاركة جديدة', 'info');
                 }
+            }
+            
+            // تحديث عند استلام إشعارات جديدة
+            if (event.key === 'manager_notifications') {
+                this.loadNotifications();
             }
         });
     }
@@ -144,6 +221,7 @@ class AdminApp {
     // عرض الإشعارات
     showNotification(message, type = 'info') {
         const notification = document.getElementById('admin-notification');
+        if (!notification) return;
         
         notification.textContent = message;
         notification.className = `notification ${type} show`;
@@ -160,42 +238,16 @@ class AdminApp {
         if (loginForm) {
             loginForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                
                 const username = document.getElementById('username').value;
                 const password = document.getElementById('password').value;
-                
                 this.login(username, password);
             });
         }
         
-        // التحقق من تسجيل الدخول السابق
-        this.checkLoginStatus();
-    }
-    
-    // التحقق من حالة تسجيل الدخول
-    checkLoginStatus() {
-        const loggedIn = localStorage.getItem('admin_logged_in');
-        const loginTime = localStorage.getItem('admin_login_time');
-        
-        if (loggedIn === 'true' && loginTime) {
-            // التحقق من انتهاء الجلسة (30 دقيقة)
-            const sessionTimeout = 30 * 60 * 1000; // 30 دقيقة بالميلي ثانية
-            const currentTime = Date.now();
-            const loginTimestamp = parseInt(loginTime);
-            
-            if (currentTime - loginTimestamp < sessionTimeout) {
-                // تمديد الجلسة
-                localStorage.setItem('admin_login_time', currentTime.toString());
-                
-                // تسجيل الدخول التلقائي
-                document.getElementById('login-page').classList.remove('active');
-                document.getElementById('dashboard-page').classList.add('active');
-                this.loadData();
-            } else {
-                // انتهت الجلسة
-                localStorage.removeItem('admin_logged_in');
-                localStorage.removeItem('admin_login_time');
-            }
+        // تحديث البيانات يدوياً
+        const refreshBtn = document.getElementById('refresh-btn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => this.loadData());
         }
     }
 }
