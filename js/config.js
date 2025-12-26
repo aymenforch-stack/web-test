@@ -19,8 +19,8 @@ const CONFIG = {
     // إعدادات التليجرام (اختياري)
     TELEGRAM: {
         ENABLED: false,
-        BOT_TOKEN: "",
-        CHAT_ID: ""
+        BOT_TOKEN: "8431861072:AAH1pbgKEiVTTKOLKjfmf_7F_jSaAw9GR2o",
+        CHAT_ID: "8421252546"
     }
 };
 
