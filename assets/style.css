@@ -1,1 +1,255 @@
-bhh
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #333;
+}
+
+.page {
+    display: none;
+    max-width: 500px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.page.active {
+    display: block;
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    color: #4a5568;
+    margin-bottom: 10px;
+}
+
+header p {
+    color: #718096;
+}
+
+.card {
+    background: #f7fafc;
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+    margin-bottom: 30px;
+    border: 2px solid #e2e8f0;
+}
+
+.btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 50px;
+    font-size: 18px;
+    cursor: pointer;
+    margin-top: 20px;
+    width: 100%;
+    transition: transform 0.3s;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.stats {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+}
+
+.stat {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.stat i {
+    font-size: 24px;
+    color: #667eea;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.stat span {
+    font-size: 28px;
+    font-weight: bold;
+    color: #2d3748;
+    display: block;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.back-btn {
+    background: none;
+    border: 2px solid #e2e8f0;
+    padding: 8px 15px;
+    border-radius: 50px;
+    cursor: pointer;
+    color: #4a5568;
+}
+
+.steps {
+    display: flex;
+    gap: 10px;
+}
+
+.step {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #718096;
+}
+
+.step.active {
+    background: #667eea;
+    color: white;
+}
+
+.step-content {
+    display: none;
+}
+
+.step-content.active {
+    display: block;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #4a5568;
+    font-weight: 600;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    border-color: #667eea;
+    outline: none;
+}
+
+.form-group small {
+    color: #718096;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+}
+
+.examples {
+    margin: 20px 0;
+}
+
+.ex-btn {
+    background: #e2e8f0;
+    border: none;
+    padding: 10px 15px;
+    margin: 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.ex-btn:hover {
+    background: #cbd5e0;
+}
+
+.success {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.success i {
+    font-size: 60px;
+    color: #48bb78;
+    margin-bottom: 20px;
+}
+
+.info-card {
+    background: #f7fafc;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    text-align: right;
+}
+
+.status {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.status.waiting {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.note {
+    margin-top: 20px;
+    color: #718096;
+    font-size: 14px;
+}
+
+.message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #48bb78;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    display: none;
+    z-index: 1000;
+}
+
+.message.show {
+    display: block;
+    animation: slideIn 0.3s;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
